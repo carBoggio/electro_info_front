@@ -6,6 +6,7 @@ import { Input } from "@heroui/input";
 import { useNavigate } from "react-router-dom";
 import DropdownActionsLoans, { PrestamoDropdown } from "@/components/dropDownActionsLoans";
 import DefaultLayout from "@/layouts/default";
+import { PrestamoEstado } from "@/types";
 
 // Interfaz para los datos completos de préstamo en esta página
 interface PrestamoDatos extends PrestamoDropdown {
@@ -13,7 +14,7 @@ interface PrestamoDatos extends PrestamoDropdown {
   libro: string;
   fechaPrestamo: string;
   fechaDevolucion: string;
-  estado: string;
+  renovaciones: number;
 }
 
 export default function ActiveLoansPage() {
@@ -31,7 +32,7 @@ export default function ActiveLoansPage() {
       usuarioId: "001", 
       fechaPrestamo: "2025-03-01", 
       fechaDevolucion: "2025-03-15", 
-      estado: "En préstamo",
+      estado: PrestamoEstado.ACTIVO,
       renovaciones: 0
     },
     { 
@@ -42,7 +43,7 @@ export default function ActiveLoansPage() {
       usuarioId: "002", 
       fechaPrestamo: "2025-03-05", 
       fechaDevolucion: "2025-03-19", 
-      estado: "En préstamo",
+      estado: PrestamoEstado.ACTIVO,
       renovaciones: 1
     },
     { 
@@ -53,7 +54,7 @@ export default function ActiveLoansPage() {
       usuarioId: "003", 
       fechaPrestamo: "2025-03-08", 
       fechaDevolucion: "2025-03-22", 
-      estado: "Por vencer",
+      estado: PrestamoEstado.VENCIDO,
       renovaciones: 2
     },
   ];
@@ -110,7 +111,6 @@ export default function ActiveLoansPage() {
                 placeholder="Buscar por título, autor o usuario"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                
                 fullWidth
               />
             </div>
@@ -137,7 +137,7 @@ export default function ActiveLoansPage() {
                     <TableCell>{prestamo.fechaDevolucion}</TableCell>
                     <TableCell>
                       <Chip 
-                        color={prestamo.estado === "Por vencer" ? "warning" : "primary"}
+                        color={prestamo.estado === PrestamoEstado.VENCIDO ? "warning" : "primary"}
                         variant="flat"
                         size="sm"
                         radius="full"

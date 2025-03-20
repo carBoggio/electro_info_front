@@ -78,3 +78,28 @@ export interface Usuario {
   historialPrestamos?: Prestamo[]; // Historial de préstamos
   limitePrestamos: number; // Número máximo de préstamos simultáneos permitidos
 }
+
+
+
+// Enums y definición de interfaces
+
+// Modelo de Prestamo
+export interface Prestamo {
+  id: string;
+  libroId: string;
+  usuarioId: string;
+  fechaPrestamo: string; // Formato fecha YYYY-MM-DD
+  fechaDevolucionPrevista: string; // Formato fecha YYYY-MM-DD
+  fechaDevolucionReal?: string; // Formato fecha YYYY-MM-DD, sólo cuando se devuelve
+  estado: PrestamoEstado;
+  renovaciones_hechas: number; // Número de veces que se ha renovado
+  diasRetraso?: number; // Días de retraso, si aplica
+  notas?: string; // Notas adicionales sobre el préstamo
+}
+
+// Información adicional que se obtendrá de otros endpoints
+export interface InfoAdicionalPrestamo {
+  libro: string;
+  autor: string;
+  usuario: string;
+}

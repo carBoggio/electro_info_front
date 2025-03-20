@@ -6,294 +6,274 @@ import { Pagination } from "@heroui/pagination";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { useNavigate } from "react-router-dom";
+import DropdownActionsLoans, { PrestamoDropdown } from "@/components/dropDownActionsLoans";
 import DefaultLayout from "@/layouts/default";
+import { Prestamo, PrestamoEstado } from "@/types";
 
-// Enums y definición de interfaces
-export enum LibroUbicacion {
-  GRADO = "grado",
-  CIENCIAS_BIOMEDICAS = "ciencias_biomedicas"
-}
-
-// Modelo de Libro
-export interface Libro {
-  id: string;
-  titulo: string;
+// Información adicional que se obtendrá de otros endpoints
+export interface InfoAdicionalPrestamo {
+  libro: string;
   autor: string;
-  isbn?: string;
-  editorial?: string;
-  anioPublicacion?: number;
-  genero?: string;
-  disponibles: number;
-  imagen?: string;
-  descripcion?: string;
-  ubicacion: LibroUbicacion; // Ubicación física en la biblioteca
+  usuario: string;
 }
 
-// Componente para las acciones de cada libro
-interface DropdownActionsLibrosProps {
-  libro: Libro;
-  onVerDetalles: (libroId: string) => void;
-  onReservar?: (libroId: string) => void;
-  onSolicitar?: (libroId: string) => void;
-}
-
-const DropdownActionsLibros = ({ 
-  libro, 
-  onVerDetalles, 
-  onReservar, 
-  onSolicitar 
-}: DropdownActionsLibrosProps) => {
-  // Aquí iría la implementación del dropdown de acciones
-  // Por simplicidad, utilizo botones básicos en este ejemplo
-  return (
-    <div className="flex gap-2">
-      <button 
-        className="text-primary text-sm hover:underline" 
-        onClick={() => onVerDetalles(libro.id)}
-      >
-        Ver detalles
-      </button>
-      
-      {onReservar && libro.disponibles > 0 && (
-        <button 
-          className="text-success text-sm hover:underline"
-          onClick={() => onReservar(libro.id)}
-        >
-          Reservar
-        </button>
-      )}
-      
-      {onSolicitar && libro.disponibles === 0 && (
-        <button 
-          className="text-warning text-sm hover:underline"
-          onClick={() => onSolicitar(libro.id)}
-        >
-          Solicitar
-        </button>
-      )}
-    </div>
-  );
+// Función para obtener información adicional del préstamo (simulada)
+const getPrestamoInfo = (prestamo: Prestamo): InfoAdicionalPrestamo => {
+  // Diccionario simulado de información de libros
+  const librosInfo: Record<string, { titulo: string, autor: string }> = {
+    'L001': { titulo: "Fahrenheit 451", autor: "Ray Bradbury" },
+    'L002': { titulo: "El retrato de Dorian Gray", autor: "Oscar Wilde" },
+    'L003': { titulo: "Cumbres Borrascosas", autor: "Emily Brontë" },
+    'L004': { titulo: "El lobo estepario", autor: "Hermann Hesse" },
+    'L005': { titulo: "Mujercitas", autor: "Louisa May Alcott" },
+    'L006': { titulo: "Crimen y castigo", autor: "Fiódor Dostoievski" },
+    'L007': { titulo: "Orgullo y prejuicio", autor: "Jane Austen" },
+    'L008': { titulo: "El Alquimista", autor: "Paulo Coelho" }
+  };
+  
+  // Diccionario simulado de información de usuarios
+  const usuariosInfo: Record<string, string> = {
+    '001': "Laura González",
+    '002': "Eduardo Ramírez",
+    '003': "Sofía Torres",
+    '004': "Diego Morales",
+    '005': "Ana Silva",
+    '006': "Carlos Méndez",
+    '007': "María Jiménez",
+    '008': "Roberto Sánchez"
+  };
+  
+  return {
+    libro: librosInfo[prestamo.libroId]?.titulo || "Libro desconocido",
+    autor: librosInfo[prestamo.libroId]?.autor || "Autor desconocido",
+    usuario: usuariosInfo[prestamo.usuarioId] || "Usuario desconocido"
+  };
 };
 
-export default function CatalogoLibrosPage() {
+export default function LoansHistoryPage() {
   // Estado para el término de búsqueda
   const [searchTerm, setSearchTerm] = useState("");
-  // Estado para el filtro de ubicación
-  const [ubicacionFilter, setUbicacionFilter] = useState("todos");
+  // Estado para el filtro
+  const [estadoFilter, setEstadoFilter] = useState("todos");
   const navigate = useNavigate();
   
   // Datos de ejemplo - en un caso real vendrían de una API
-  const catalogoLibrosCompleto: Libro[] = [
+  const prestamosBase: Prestamo[] = [
     {
       id: "1",
-      titulo: "Fahrenheit 451",
-      autor: "Ray Bradbury",
-      isbn: "978-0345342966",
-      editorial: "Ballantine Books",
-      anioPublicacion: 1953,
-      genero: "Ciencia ficción",
-      disponibles: 3,
-      descripcion: "Fahrenheit 451 es una novela distópica del escritor estadounidense Ray Bradbury, publicada en 1953.",
-      ubicacion: LibroUbicacion.GRADO
+      libroId: "L001",
+      usuarioId: "001",
+      fechaPrestamo: "2025-01-15",
+      fechaDevolucionPrevista: "2025-01-29",
+      fechaDevolucionReal: "2025-01-28",
+      estado: PrestamoEstado.DEVUELTO,
+      renovaciones_hechas: 0,
+      notas: "Libro devuelto en perfectas condiciones"
     },
     {
       id: "2",
-      titulo: "El retrato de Dorian Gray",
-      autor: "Oscar Wilde",
-      isbn: "978-0486278070",
-      editorial: "Dover Publications",
-      anioPublicacion: 1890,
-      genero: "Novela gótica",
-      disponibles: 0,
-      descripcion: "El retrato de Dorian Gray es una novela escrita por el autor irlandés Oscar Wilde.",
-      ubicacion: LibroUbicacion.GRADO
+      libroId: "L002",
+      usuarioId: "002",
+      fechaPrestamo: "2025-02-01",
+      fechaDevolucionPrevista: "2025-02-15",
+      estado: PrestamoEstado.ACTIVO,
+      renovaciones_hechas: 0,
+      notas: "Primera vez que el usuario solicita este libro"
     },
     {
       id: "3",
-      titulo: "Cumbres Borrascosas",
-      autor: "Emily Brontë",
-      isbn: "978-0141439556",
-      editorial: "Penguin Classics",
-      anioPublicacion: 1847,
-      genero: "Novela gótica",
-      disponibles: 2,
-      descripcion: "Cumbres Borrascosas es la única novela de la escritora británica Emily Brontë.",
-      ubicacion: LibroUbicacion.GRADO
+      libroId: "L003",
+      usuarioId: "003",
+      fechaPrestamo: "2025-01-20",
+      fechaDevolucionPrevista: "2025-02-03",
+      estado: PrestamoEstado.VENCIDO,
+      renovaciones_hechas: 0,
+      diasRetraso: 10,
+      notas: "Usuario contactado por email el 04/02"
     },
     {
       id: "4",
-      titulo: "El lobo estepario",
-      autor: "Hermann Hesse",
-      isbn: "978-0312278670",
-      editorial: "Picador",
-      anioPublicacion: 1927,
-      genero: "Novela filosófica",
-      disponibles: 1,
-      descripcion: "El lobo estepario relata la historia de un hombre dividido entre su naturaleza humana y otra salvaje.",
-      ubicacion: LibroUbicacion.GRADO
+      libroId: "L004",
+      usuarioId: "004",
+      fechaPrestamo: "2025-01-10",
+      fechaDevolucionPrevista: "2025-01-24",
+      fechaDevolucionReal: "2025-01-23",
+      estado: PrestamoEstado.DEVUELTO,
+      renovaciones_hechas: 0,
+      notas: ""
     },
     {
       id: "5",
-      titulo: "Mujercitas",
-      autor: "Louisa May Alcott",
-      isbn: "978-0316489270",
-      editorial: "Little, Brown and Company",
-      anioPublicacion: 1868,
-      genero: "Novela",
-      disponibles: 5,
-      descripcion: "Mujercitas es una novela de Louisa May Alcott publicada el 30 de septiembre de 1868.",
-      ubicacion: LibroUbicacion.GRADO
+      libroId: "L005",
+      usuarioId: "005",
+      fechaPrestamo: "2025-02-05",
+      fechaDevolucionPrevista: "2025-02-19",
+      estado: PrestamoEstado.ACTIVO,
+      renovaciones_hechas: 0,
+      notas: "Libro prestado para trabajo académico"
     },
     {
       id: "6",
-      titulo: "Manual de Anatomía Humana",
-      autor: "Frank H. Netter",
-      isbn: "978-8445826089",
-      editorial: "Elsevier",
-      anioPublicacion: 2019,
-      genero: "Texto académico",
-      disponibles: 2,
-      descripcion: "Atlas de anatomía humana con ilustraciones detalladas del cuerpo humano.",
-      ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS
+      libroId: "L006",
+      usuarioId: "006",
+      fechaPrestamo: "2025-01-05",
+      fechaDevolucionPrevista: "2025-01-19",
+      estado: PrestamoEstado.VENCIDO,
+      renovaciones_hechas: 0,
+      diasRetraso: 25,
+      notas: "Usuario reportó pérdida el 30/01"
     },
     {
       id: "7",
-      titulo: "Principios de Bioquímica",
-      autor: "Albert L. Lehninger",
-      isbn: "978-8428214865",
-      editorial: "Omega",
-      anioPublicacion: 2018,
-      genero: "Texto académico",
-      disponibles: 0,
-      descripcion: "Libro de texto sobre los principios fundamentales de la bioquímica.",
-      ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS
+      libroId: "L007",
+      usuarioId: "007",
+      fechaPrestamo: "2025-01-25",
+      fechaDevolucionPrevista: "2025-02-08",
+      estado: PrestamoEstado.ACTIVO,
+      renovaciones_hechas: 1,
+      notas: "Renovación solicitada por teléfono"
     },
     {
       id: "8",
-      titulo: "Microbiología Médica",
-      autor: "Patrick R. Murray",
-      isbn: "978-8491132110",
-      editorial: "Elsevier",
-      anioPublicacion: 2017,
-      genero: "Texto académico",
-      disponibles: 3,
-      descripcion: "Guía completa sobre microbiología aplicada a la medicina.",
-      ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS
+      libroId: "L008",
+      usuarioId: "008",
+      fechaPrestamo: "2025-02-10",
+      fechaDevolucionPrevista: "2025-02-24",
+      estado: PrestamoEstado.ACTIVO,
+      renovaciones_hechas: 0,
+      notas: ""
     }
   ];
+  
+  // Enriquecer los préstamos con información adicional y adaptarlos para el dropdown
+  const historialPrestamosCompleto = prestamosBase.map(prestamo => {
+    const info = getPrestamoInfo(prestamo);
+    return {
+      ...prestamo,
+      ...info,
+      // Adaptar para el dropdown
+      usuario: info.usuario // Aseguramos que usuario esté disponible para el dropdown
+    };
+  });
 
   // Función de filtrado
-  const filteredLibros = useCallback(() => {
-    return catalogoLibrosCompleto.filter(libro => {
-      // Filtro por ubicación
-      const ubicacionMatch = ubicacionFilter === "todos" || 
-                           libro.ubicacion === ubicacionFilter;
+  const filteredPrestamos = useCallback(() => {
+    return historialPrestamosCompleto.filter(prestamo => {
+      // Filtro por estado
+      const estadoMatch = estadoFilter === "todos" || 
+                        prestamo.estado.toLowerCase() === estadoFilter.toLowerCase();
       
       // Filtro por búsqueda
       const searchMatch = 
         searchTerm === "" || 
-        libro.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        libro.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (libro.genero && libro.genero.toLowerCase().includes(searchTerm.toLowerCase()));
+        prestamo.libro.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        prestamo.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prestamo.usuario.toLowerCase().includes(searchTerm.toLowerCase());
       
-      return ubicacionMatch && searchMatch;
+      return estadoMatch && searchMatch;
     });
-  }, [searchTerm, ubicacionFilter, catalogoLibrosCompleto]);
+  }, [searchTerm, estadoFilter, historialPrestamosCompleto]);
 
-  // Obtener los libros filtrados
-  const librosListados = filteredLibros();
+  // Obtener los préstamos filtrados
+  const historialPrestamos = filteredPrestamos();
 
-  // Handlers para las acciones
-  const handleVerDetalles = (libroId: string) => {
-    navigate(`/detalles-libro/${libroId}`);
+  // Handlers para las acciones del dropdown
+  const handleDevolver = (prestamoId: string | number) => {
+    alert(`Devolución del préstamo #${prestamoId} registrada con éxito`);
   };
 
-  const handleReservar = (libroId: string) => {
-    alert(`Libro #${libroId} reservado con éxito`);
+  const handleRenovar = (prestamoId: string | number) => {
+    alert(`Préstamo #${prestamoId} renovado con éxito`);
   };
 
-  const handleSolicitar = (libroId: string) => {
-    alert(`Solicitud para el libro #${libroId} registrada. Te notificaremos cuando esté disponible.`);
+  const handleVerDetalles = (prestamoId: string | number) => {
+    navigate(`/detalles-prestamo/${prestamoId}`);
+  };
+
+  const handleVerPerfil = (usuarioId: string) => {
+    navigate(`/perfil-usuario/${usuarioId}`);
+  };
+
+  const handleVerHistorial = (usuarioId: string) => {
+    navigate(`/historial-usuario/${usuarioId}`);
   };
 
   return (
     <DefaultLayout>
       <div className="space-y-8">
         <div className="flex flex-col gap-4">
-          <h1 className="text-4xl font-bold">Catálogo de Libros</h1>
+          <h1 className="text-4xl font-bold">Historial de Préstamos</h1>
           <p className="text-lg text-default-500">
-            Explora nuestra colección de libros disponibles en la biblioteca
+            Consulta y gestiona el historial de préstamos de la biblioteca
           </p>
         </div>
 
         <Card shadow="md" radius="lg" className="w-full">
           <CardHeader className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold">Libros en catálogo</h2>
+            <h2 className="text-xl font-semibold">Préstamos anteriores</h2>
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Input
-                placeholder="Buscar por título, autor o género"
+                placeholder="Buscar por título, autor o usuario"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full sm:w-1/2"
               />
               
               <Select 
-                label="Filtrar por ubicación" 
-                selectedKeys={[ubicacionFilter]}
-                onChange={(e) => setUbicacionFilter(e.target.value)}
+                label="Filtrar por estado" 
+                selectedKeys={[estadoFilter]}
+                onChange={(e) => setEstadoFilter(e.target.value)}
                 className="w-full sm:w-1/4"
               >
-                <SelectItem key="todos" >Todas las ubicaciones</SelectItem>
-                <SelectItem key="grado" >Grado</SelectItem>
-                <SelectItem key="ciencias_biomedicas" >Ciencias Biomédicas</SelectItem>
+                <SelectItem key="todos" value="todos">Todos</SelectItem>
+                <SelectItem key="activo" value={PrestamoEstado.ACTIVO}>Activo</SelectItem>
+                <SelectItem key="vencido" value={PrestamoEstado.VENCIDO}>Vencido</SelectItem>
+                <SelectItem key="devuelto" value={PrestamoEstado.DEVUELTO}>Devuelto</SelectItem>
               </Select>
             </div>
           </CardHeader>
           <CardBody>
-            <Table aria-label="Tabla de catálogo de libros">
+            <Table aria-label="Tabla de historial de préstamos">
               <TableHeader>
-                <TableColumn>TÍTULO</TableColumn>
+                <TableColumn>LIBRO</TableColumn>
                 <TableColumn>AUTOR</TableColumn>
-                <TableColumn>AÑO</TableColumn>
-                <TableColumn>GÉNERO</TableColumn>
-                <TableColumn>DISPONIBLES</TableColumn>
-                <TableColumn>UBICACIÓN</TableColumn>
+                <TableColumn>USUARIO</TableColumn>
+                <TableColumn>FECHA PRÉSTAMO</TableColumn>
+                <TableColumn>FECHA DEVOLUCIÓN</TableColumn>
+                <TableColumn>ESTADO</TableColumn>
                 <TableColumn>ACCIONES</TableColumn>
               </TableHeader>
-              <TableBody emptyContent="No se encontraron libros">
-                {librosListados.map((libro) => (
-                  <TableRow key={libro.id}>
-                    <TableCell>{libro.titulo}</TableCell>
-                    <TableCell>{libro.autor}</TableCell>
-                    <TableCell>{libro.anioPublicacion}</TableCell>
-                    <TableCell>{libro.genero}</TableCell>
+              <TableBody emptyContent="No se encontraron préstamos">
+                {historialPrestamos.map((prestamo) => (
+                  <TableRow key={prestamo.id}>
+                    <TableCell>{prestamo.libro}</TableCell>
+                    <TableCell>{prestamo.autor}</TableCell>
+                    <TableCell>{prestamo.usuario}</TableCell>
+                    <TableCell>{prestamo.fechaPrestamo}</TableCell>
+                    <TableCell>{prestamo.fechaDevolucionPrevista}</TableCell>
                     <TableCell>
                       <Chip 
-                        color={libro.disponibles > 0 ? "success" : "danger"}
+                        color={
+                          prestamo.estado === PrestamoEstado.DEVUELTO ? "success" :
+                          prestamo.estado === PrestamoEstado.VENCIDO ? "danger" :
+                          "primary"
+                        }
                         variant="flat"
                         size="sm"
                         radius="full"
                       >
-                        {libro.disponibles > 0 ? `${libro.disponibles} disponibles` : "No disponible"}
+                        {prestamo.estado}
                       </Chip>
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        color={libro.ubicacion === LibroUbicacion.GRADO ? "primary" : "secondary"}
-                        variant="flat"
-                        size="sm"
-                        radius="full"
-                      >
-                        {libro.ubicacion === LibroUbicacion.GRADO ? "Grado" : "Ciencias Biomédicas"}
-                      </Chip>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownActionsLibros 
-                        libro={libro}
+                      <DropdownActionsLoans 
+                        prestamo={prestamo}
+                        onDevolver={handleDevolver}
+                        onRenovar={handleRenovar}
                         onVerDetalles={handleVerDetalles}
-                        onReservar={handleReservar}
-                        onSolicitar={handleSolicitar}
+                        onVerPerfil={handleVerPerfil}
+                        onVerHistorial={handleVerHistorial}
                       />
                     </TableCell>
                   </TableRow>
@@ -302,7 +282,7 @@ export default function CatalogoLibrosPage() {
             </Table>
           </CardBody>
           <CardFooter className="flex justify-between items-center">
-            <p className="text-small text-default-500">Total de libros: {librosListados.length}</p>
+            <p className="text-small text-default-500">Total de préstamos: {historialPrestamos.length}</p>
             <Pagination total={1} initialPage={1} />
           </CardFooter>
         </Card>
