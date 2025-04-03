@@ -6,164 +6,158 @@ import { Pagination } from "@heroui/pagination";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { useNavigate } from "react-router-dom";
-import DropdownActionsLoans, { PrestamoDropdown } from "@/components/dropDownActionsLoans";
+import DropdownActionsLoans from "@/components/dropDownActionsLoans";
 import DefaultLayout from "@/layouts/default";
-import { Prestamo, PrestamoEstado } from "@/types";
+import { Prestamo, PrestamoEstado, Libro, LibroUbicacion } from "@/types";
+import { Selection } from "@react-types/shared";
 
-// Información adicional que se obtendrá de otros endpoints
-export interface InfoAdicionalPrestamo {
+// Datos de ejemplo de libros como lista
+const LIBROS_LISTA: Libro[] = [
+  { 
+    id: 'L001',
+    titulo: "Fahrenheit 451", 
+    autor: "Ray Bradbury",
+    disponibles: 2,
+    ubicacion: LibroUbicacion.GRADO
+  },
+  { 
+    id: 'L002',
+    titulo: "El retrato de Dorian Gray", 
+    autor: "Oscar Wilde",
+    disponibles: 1,
+    ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS
+  },
+  { 
+    id: 'L003',
+    titulo: "Cumbres Borrascosas", 
+    autor: "Emily Brontë",
+    disponibles: 3,
+    ubicacion: LibroUbicacion.GRADO
+  },
+  { 
+    id: 'L004',
+    titulo: "El lobo estepario", 
+    autor: "Hermann Hesse",
+    disponibles: 0,
+    ubicacion: LibroUbicacion.GRADO
+  },
+  { 
+    id: 'L005',
+    titulo: "Mujercitas", 
+    autor: "Louisa May Alcott",
+    disponibles: 2,
+    ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS
+  },
+  { 
+    id: 'L006',
+    titulo: "Crimen y castigo", 
+    autor: "Fiódor Dostoievski",
+    disponibles: 1,
+    ubicacion: LibroUbicacion.GRADO
+  },
+  { 
+    id: 'L007',
+    titulo: "Orgullo y prejuicio", 
+    autor: "Jane Austen",
+    disponibles: 4,
+    ubicacion: LibroUbicacion.GRADO
+  },
+  { 
+    id: 'L008',
+    titulo: "El Alquimista", 
+    autor: "Paulo Coelho",
+    disponibles: 2,
+    ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS
+  }
+];
+
+// Mapeo simple de IDs a nombres de usuarios
+const USUARIOS: Record<string, string> = {
+  '001': "Laura González",
+  '002': "Eduardo Ramírez",
+  '003': "Sofía Torres",
+  '004': "Diego Morales",
+  '005': "Ana Silva",
+  '006': "Carlos Méndez",
+  '007': "María Jiménez",
+  '008': "Roberto Sánchez"
+};
+
+// Datos de ejemplo de préstamos
+const PRESTAMOS_BASE: Prestamo[] = [
+  {
+    id: "1", libroId: "L001", usuarioId: "001",
+    fechaPrestamo: "2025-01-15", fechaDevolucionPrevista: "2025-01-29", 
+    fechaDevolucionReal: "2025-01-28", estado: PrestamoEstado.DEVUELTO,
+    renovaciones_hechas: 0, notas: "Libro devuelto en perfectas condiciones"
+  },
+  {
+    id: "2", libroId: "L002", usuarioId: "002",
+    fechaPrestamo: "2025-02-01", fechaDevolucionPrevista: "2025-02-15", 
+    estado: PrestamoEstado.ACTIVO, renovaciones_hechas: 0,
+    notas: "Primera vez que el usuario solicita este libro"
+  },
+  {
+    id: "3", libroId: "L003", usuarioId: "003",
+    fechaPrestamo: "2025-01-20", fechaDevolucionPrevista: "2025-02-03", 
+    estado: PrestamoEstado.VENCIDO, renovaciones_hechas: 0, diasRetraso: 10,
+    notas: "Usuario contactado por email el 04/02"
+  }
+];
+
+// Opciones para el filtro de estado
+const estadoOptions = [
+  { key: "todos", label: "Todos" },
+  { key: "activo", label: "Activo" },
+  { key: "vencido", label: "Vencido" },
+  { key: "devuelto", label: "Devuelto" }
+];
+
+// Tipo simple para préstamos con información adicional
+type PrestamoConInfo = Prestamo & {
   libro: string;
   autor: string;
   usuario: string;
-}
-
-// Función para obtener información adicional del préstamo (simulada)
-const getPrestamoInfo = (prestamo: Prestamo): InfoAdicionalPrestamo => {
-  // Diccionario simulado de información de libros
-  const librosInfo: Record<string, { titulo: string, autor: string }> = {
-    'L001': { titulo: "Fahrenheit 451", autor: "Ray Bradbury" },
-    'L002': { titulo: "El retrato de Dorian Gray", autor: "Oscar Wilde" },
-    'L003': { titulo: "Cumbres Borrascosas", autor: "Emily Brontë" },
-    'L004': { titulo: "El lobo estepario", autor: "Hermann Hesse" },
-    'L005': { titulo: "Mujercitas", autor: "Louisa May Alcott" },
-    'L006': { titulo: "Crimen y castigo", autor: "Fiódor Dostoievski" },
-    'L007': { titulo: "Orgullo y prejuicio", autor: "Jane Austen" },
-    'L008': { titulo: "El Alquimista", autor: "Paulo Coelho" }
-  };
-  
-  // Diccionario simulado de información de usuarios
-  const usuariosInfo: Record<string, string> = {
-    '001': "Laura González",
-    '002': "Eduardo Ramírez",
-    '003': "Sofía Torres",
-    '004': "Diego Morales",
-    '005': "Ana Silva",
-    '006': "Carlos Méndez",
-    '007': "María Jiménez",
-    '008': "Roberto Sánchez"
-  };
-  
-  return {
-    libro: librosInfo[prestamo.libroId]?.titulo || "Libro desconocido",
-    autor: librosInfo[prestamo.libroId]?.autor || "Autor desconocido",
-    usuario: usuariosInfo[prestamo.usuarioId] || "Usuario desconocido"
-  };
 };
 
 export default function LoansHistoryPage() {
-  // Estado para el término de búsqueda
   const [searchTerm, setSearchTerm] = useState("");
-  // Estado para el filtro
-  const [estadoFilter, setEstadoFilter] = useState("todos");
+  const [estadoFilter, setEstadoFilter] = useState<Selection>(new Set(["todos"]));
   const navigate = useNavigate();
   
-  // Datos de ejemplo - en un caso real vendrían de una API
-  const prestamosBase: Prestamo[] = [
-    {
-      id: "1",
-      libroId: "L001",
-      usuarioId: "001",
-      fechaPrestamo: "2025-01-15",
-      fechaDevolucionPrevista: "2025-01-29",
-      fechaDevolucionReal: "2025-01-28",
-      estado: PrestamoEstado.DEVUELTO,
-      renovaciones_hechas: 0,
-      notas: "Libro devuelto en perfectas condiciones"
-    },
-    {
-      id: "2",
-      libroId: "L002",
-      usuarioId: "002",
-      fechaPrestamo: "2025-02-01",
-      fechaDevolucionPrevista: "2025-02-15",
-      estado: PrestamoEstado.ACTIVO,
-      renovaciones_hechas: 0,
-      notas: "Primera vez que el usuario solicita este libro"
-    },
-    {
-      id: "3",
-      libroId: "L003",
-      usuarioId: "003",
-      fechaPrestamo: "2025-01-20",
-      fechaDevolucionPrevista: "2025-02-03",
-      estado: PrestamoEstado.VENCIDO,
-      renovaciones_hechas: 0,
-      diasRetraso: 10,
-      notas: "Usuario contactado por email el 04/02"
-    },
-    {
-      id: "4",
-      libroId: "L004",
-      usuarioId: "004",
-      fechaPrestamo: "2025-01-10",
-      fechaDevolucionPrevista: "2025-01-24",
-      fechaDevolucionReal: "2025-01-23",
-      estado: PrestamoEstado.DEVUELTO,
-      renovaciones_hechas: 0,
-      notas: ""
-    },
-    {
-      id: "5",
-      libroId: "L005",
-      usuarioId: "005",
-      fechaPrestamo: "2025-02-05",
-      fechaDevolucionPrevista: "2025-02-19",
-      estado: PrestamoEstado.ACTIVO,
-      renovaciones_hechas: 0,
-      notas: "Libro prestado para trabajo académico"
-    },
-    {
-      id: "6",
-      libroId: "L006",
-      usuarioId: "006",
-      fechaPrestamo: "2025-01-05",
-      fechaDevolucionPrevista: "2025-01-19",
-      estado: PrestamoEstado.VENCIDO,
-      renovaciones_hechas: 0,
-      diasRetraso: 25,
-      notas: "Usuario reportó pérdida el 30/01"
-    },
-    {
-      id: "7",
-      libroId: "L007",
-      usuarioId: "007",
-      fechaPrestamo: "2025-01-25",
-      fechaDevolucionPrevista: "2025-02-08",
-      estado: PrestamoEstado.ACTIVO,
-      renovaciones_hechas: 1,
-      notas: "Renovación solicitada por teléfono"
-    },
-    {
-      id: "8",
-      libroId: "L008",
-      usuarioId: "008",
-      fechaPrestamo: "2025-02-10",
-      fechaDevolucionPrevista: "2025-02-24",
-      estado: PrestamoEstado.ACTIVO,
-      renovaciones_hechas: 0,
-      notas: ""
-    }
-  ];
+  // Crear un mapa de libros por ID para facilitar la búsqueda
+  const librosMap = LIBROS_LISTA.reduce((map, libro) => {
+    map[libro.id] = libro;
+    return map;
+  }, {} as Record<string, Libro>);
   
-  // Enriquecer los préstamos con información adicional y adaptarlos para el dropdown
-  const historialPrestamosCompleto = prestamosBase.map(prestamo => {
-    const info = getPrestamoInfo(prestamo);
+  // Enriquecer los préstamos con información adicional
+  const historialPrestamosCompleto: PrestamoConInfo[] = PRESTAMOS_BASE.map(prestamo => {
+    const libro = librosMap[prestamo.libroId];
+    
     return {
       ...prestamo,
-      ...info,
-      // Adaptar para el dropdown
-      usuario: info.usuario // Aseguramos que usuario esté disponible para el dropdown
+      libro: libro?.titulo || "Libro desconocido",
+      autor: libro?.autor || "Autor desconocido",
+      usuario: USUARIOS[prestamo.usuarioId] || "Usuario desconocido"
     };
   });
 
-  // Función de filtrado
-  const filteredPrestamos = useCallback(() => {
+  // Función de filtrado simplificada
+  const historialPrestamos = useCallback(() => {
+    // Extraer el valor seleccionado del Set
+    let estadoSeleccionado = "todos";
+    
+    if (estadoFilter === "all") {
+      estadoSeleccionado = "todos";
+    } else if (estadoFilter instanceof Set) {
+      estadoSeleccionado = Array.from(estadoFilter)[0] as string || "todos";
+    }
+    
     return historialPrestamosCompleto.filter(prestamo => {
-      // Filtro por estado
-      const estadoMatch = estadoFilter === "todos" || 
-                        prestamo.estado.toLowerCase() === estadoFilter.toLowerCase();
+      const estadoMatch = estadoSeleccionado === "todos" || 
+                          prestamo.estado.toLowerCase() === estadoSeleccionado.toLowerCase();
       
-      // Filtro por búsqueda
       const searchMatch = 
         searchTerm === "" || 
         prestamo.libro.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -172,30 +166,24 @@ export default function LoansHistoryPage() {
       
       return estadoMatch && searchMatch;
     });
-  }, [searchTerm, estadoFilter, historialPrestamosCompleto]);
+  }, [searchTerm, estadoFilter])();
 
-  // Obtener los préstamos filtrados
-  const historialPrestamos = filteredPrestamos();
-
-  // Handlers para las acciones del dropdown
-  const handleDevolver = (prestamoId: string | number) => {
-    alert(`Devolución del préstamo #${prestamoId} registrada con éxito`);
+  // Funciones de manejo de acciones
+  const handleActions = {
+    devolver: (id: string | number) => alert(`Devolución del préstamo #${id} registrada con éxito`),
+    renovar: (id: string | number) => alert(`Préstamo #${id} renovado con éxito`),
+    verDetalles: (id: string | number) => navigate(`/detalles-prestamo/${id}`),
+    verPerfil: (id: string) => navigate(`/perfil-usuario/${id}`),
+    verHistorial: (id: string) => navigate(`/historial-usuario/${id}`)
   };
 
-  const handleRenovar = (prestamoId: string | number) => {
-    alert(`Préstamo #${prestamoId} renovado con éxito`);
-  };
-
-  const handleVerDetalles = (prestamoId: string | number) => {
-    navigate(`/detalles-prestamo/${prestamoId}`);
-  };
-
-  const handleVerPerfil = (usuarioId: string) => {
-    navigate(`/perfil-usuario/${usuarioId}`);
-  };
-
-  const handleVerHistorial = (usuarioId: string) => {
-    navigate(`/historial-usuario/${usuarioId}`);
+  // Función para determinar el color del chip según el estado
+  const getChipColor = (estado: PrestamoEstado) => {
+    switch(estado) {
+      case PrestamoEstado.DEVUELTO: return "success";
+      case PrestamoEstado.VENCIDO: return "danger";
+      default: return "primary";
+    }
   };
 
   return (
@@ -221,15 +209,18 @@ export default function LoansHistoryPage() {
               />
               
               <Select 
-                label="Filtrar por estado" 
-                selectedKeys={[estadoFilter]}
-                onChange={(e) => setEstadoFilter(e.target.value)}
+                label="Filtrar por estado"
+                labelPlacement="outside" 
+                placeholder="Seleccionar estado"
+                selectedKeys={estadoFilter}
+                onSelectionChange={(keys) => setEstadoFilter(keys)}
                 className="w-full sm:w-1/4"
               >
-                <SelectItem key="todos" value="todos">Todos</SelectItem>
-                <SelectItem key="activo" value={PrestamoEstado.ACTIVO}>Activo</SelectItem>
-                <SelectItem key="vencido" value={PrestamoEstado.VENCIDO}>Vencido</SelectItem>
-                <SelectItem key="devuelto" value={PrestamoEstado.DEVUELTO}>Devuelto</SelectItem>
+                {estadoOptions.map((option) => (
+                  <SelectItem key={option.key}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </Select>
             </div>
           </CardHeader>
@@ -254,11 +245,7 @@ export default function LoansHistoryPage() {
                     <TableCell>{prestamo.fechaDevolucionPrevista}</TableCell>
                     <TableCell>
                       <Chip 
-                        color={
-                          prestamo.estado === PrestamoEstado.DEVUELTO ? "success" :
-                          prestamo.estado === PrestamoEstado.VENCIDO ? "danger" :
-                          "primary"
-                        }
+                        color={getChipColor(prestamo.estado)}
                         variant="flat"
                         size="sm"
                         radius="full"
@@ -269,11 +256,11 @@ export default function LoansHistoryPage() {
                     <TableCell>
                       <DropdownActionsLoans 
                         prestamo={prestamo}
-                        onDevolver={handleDevolver}
-                        onRenovar={handleRenovar}
-                        onVerDetalles={handleVerDetalles}
-                        onVerPerfil={handleVerPerfil}
-                        onVerHistorial={handleVerHistorial}
+                        onDevolver={handleActions.devolver}
+                        onRenovar={handleActions.renovar}
+                        onVerDetalles={handleActions.verDetalles}
+                        onVerPerfil={handleActions.verPerfil}
+                        onVerHistorial={handleActions.verHistorial}
                       />
                     </TableCell>
                   </TableRow>
