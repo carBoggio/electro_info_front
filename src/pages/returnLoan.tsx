@@ -2,18 +2,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Chip } from "@heroui/chip";
-import { Link } from "@heroui/link";
 import DefaultLayout from "@/layouts/default";
 import { useState, useEffect } from "react";
 import { Prestamo, PrestamoEstado } from "@/types";
 import { getPrestamo } from "@/actions/getPrestamo";
+import { returnLoan } from "@/actions/returnLoan";
 
-export default function LoanPage() {
+export default function ReturnLoanPage() {
   const { loanId } = useParams();
   const navigate = useNavigate();
   const [prestamo, setPrestamo] = useState<Prestamo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReturning, setIsReturning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPrestamo = async () => {
@@ -33,6 +35,34 @@ export default function LoanPage() {
 
     fetchPrestamo();
   }, [loanId]);
+
+  const handleReturn = async () => {
+    if (!prestamo || !loanId) return;
+    
+    try {
+      setIsReturning(true);
+      setError(null);
+      const result = await returnLoan(loanId);
+      
+      if (result.success) {
+        setSuccessMessage(result.message);
+        if (result.prestamo) {
+          setPrestamo(result.prestamo);
+        }
+        // Esperar 2 segundos y redirigir a préstamos activos
+        setTimeout(() => {
+          navigate('/prestamos-activos');
+        }, 2000);
+      } else {
+        throw new Error("No se pudo devolver el préstamo");
+      }
+    } catch (err) {
+      console.error("Error al devolver el préstamo:", err);
+      setError("Error al devolver el préstamo. Por favor, intente nuevamente.");
+    } finally {
+      setIsReturning(false);
+    }
+  };
 
   const getChipColor = (estado: PrestamoEstado) => {
     switch(estado) {
@@ -69,11 +99,23 @@ export default function LoanPage() {
     <DefaultLayout>
       <div className="space-y-8 py-8">
         <div className="flex flex-col gap-4">
-          <h1 className="text-4xl font-bold">Detalles del Préstamo</h1>
+          <h1 className="text-4xl font-bold">Devolver Préstamo</h1>
           <p className="text-xl text-default-500">
-            Información completa del préstamo
+            Confirma la devolución del libro
           </p>
         </div>
+
+        {successMessage && (
+          <div className="bg-success-50 border border-success-200 text-success rounded-lg p-4">
+            {successMessage}
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-danger-50 border border-danger-200 text-danger rounded-lg p-4">
+            {error}
+          </div>
+        )}
 
         <Card className="w-full" shadow="sm">
           <CardHeader className="px-6 py-4">
@@ -93,9 +135,6 @@ export default function LoanPage() {
                   <p><span className="font-medium">Usuario:</span> {prestamo.usuarioNombre}</p>
                   <p><span className="font-medium">Fecha de Préstamo:</span> {prestamo.fechaPrestamo}</p>
                   <p><span className="font-medium">Fecha de Devolución:</span> {prestamo.fechaDevolucionPrevista}</p>
-                  {prestamo.fechaDevolucionReal && (
-                    <p><span className="font-medium">Fecha de Devolución Real:</span> {prestamo.fechaDevolucionReal}</p>
-                  )}
                   <p>
                     <span className="font-medium">Estado:</span>{" "}
                     <Chip
@@ -118,26 +157,19 @@ export default function LoanPage() {
                 )}
                 
                 <div className="flex justify-end gap-4">
-                  {prestamo.estado !== PrestamoEstado.DEVUELTO && (
-                    <>
-                      <Button
-                        as={Link}
-                        href={`/prestamos/${prestamo.id}/devolver`}
-                        color="success"
-                        variant="flat"
-                      >
-                        Devolver Préstamo
-                      </Button>
-                      <Button
-                        as={Link}
-                        href={`/prestamos/${prestamo.id}/renovar`}
-                        color="primary"
-                        variant="flat"
-                      >
-                        Renovar Préstamo
-                      </Button>
-                    </>
-                  )}
+                  <Button
+                    color="success"
+                    onClick={handleReturn}
+                    isDisabled={isReturning || prestamo.estado === PrestamoEstado.DEVUELTO}
+                    isLoading={isReturning}
+                  >
+                    {prestamo.estado === PrestamoEstado.DEVUELTO 
+                      ? "Préstamo ya devuelto"
+                      : isReturning 
+                        ? "Procesando devolución..." 
+                        : "Confirmar Devolución"
+                    }
+                  </Button>
                 </div>
               </div>
             </div>
@@ -146,4 +178,4 @@ export default function LoanPage() {
       </div>
     </DefaultLayout>
   );
-}
+} 

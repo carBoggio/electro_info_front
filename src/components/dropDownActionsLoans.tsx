@@ -29,9 +29,6 @@ const DropdownActionsLoans = (prestamo: Prestamo) => {
       case "perfil":
         navigate(`/usuarios/${prestamo.usuarioId}`);
         break;
-      case "historial":
-        navigate(`/usuarios/${prestamo.usuarioId}/historial`);
-        break;
     }
   };
 
@@ -61,9 +58,6 @@ const DropdownActionsLoans = (prestamo: Prestamo) => {
         </DropdownItem>
         <DropdownItem key="perfil" className="text-secondary">
           Ver perfil
-        </DropdownItem>
-        <DropdownItem key="historial" className="text-secondary">
-          Ver historial
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

@@ -1,6 +1,12 @@
 import { Libro } from "@/types";
-import { LIBROS_LISTA } from "@/actions/mocks";
+import { basicFetch } from "./BasicFetch";
 
 export const getAllBooks = async (): Promise<Libro[]> => {
-  return LIBROS_LISTA;
+  try {
+    const response = await basicFetch('/api/libros', 'GET');
+    return response as Libro[];
+  } catch (error) {
+    console.error("Error al obtener los libros:", error);
+    throw error;
+  }
 };

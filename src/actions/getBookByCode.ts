@@ -1,5 +1,5 @@
 import { Libro } from "@/types";
-import { getAllBooks } from "@/actions/getAllBooks";
+import { basicFetch } from "./BasicFetch";
 
 /**
  * Interface para la respuesta de búsqueda de libro por código
@@ -25,53 +25,8 @@ export const getBookByCode = async (code: string): Promise<GetBookByCodeResponse
       };
     }
 
-    // Obtener todos los libros disponibles
-    const libros = await getAllBooks();
-    
-    // En un entorno real, esta sería una llamada a la API específica para buscar por código
-    // Para esta implementación, simulamos una búsqueda en los libros disponibles
-    
-    // Normalizamos el código para la búsqueda (eliminar espacios, convertir a minúsculas)
-    const normalizedCode = code.trim().toLowerCase();
-    
-    // Buscar el libro por código (simulado: buscamos por ID o cualquier coincidencia con el código)
-    const libroEncontrado = libros.find(libro => 
-      libro.id === normalizedCode || 
-      (libro.isbn && libro.isbn.toLowerCase() === normalizedCode) ||
-      (typeof libro.codigo === "string" && libro.codigo.toLowerCase() === normalizedCode)
-    );
-    
-    if (libroEncontrado) {
-      return {
-        success: true,
-        message: `Libro '${libroEncontrado.titulo}' encontrado con éxito`,
-        libro: libroEncontrado
-      };
-    } else {
-      // Si no encontramos el libro exacto, simulamos una búsqueda probabilística
-      // En un entorno real, esto sería una búsqueda más sofisticada en la base de datos
-      
-      // Para fines de demostración, si el código tiene al menos 4 caracteres,
-      // buscamos cualquier libro que contenga esos caracteres en su ID
-      if (normalizedCode.length >= 4) {
-        const posibleLibro = libros.find(libro => 
-          libro.id.toLowerCase().includes(normalizedCode)
-        );
-        
-        if (posibleLibro) {
-          return {
-            success: true,
-            message: `Posible coincidencia encontrada: '${posibleLibro.titulo}'`,
-            libro: posibleLibro
-          };
-        }
-      }
-      
-      return {
-        success: false,
-        message: `No se encontró ningún libro con el código '${code}'`
-      };
-    }
+    const response = await basicFetch(`/api/libros/codigo/${encodeURIComponent(code.trim())}`, 'GET');
+    return response as GetBookByCodeResponse;
   } catch (error) {
     console.error("Error en getBookByCode:", error);
     return {
