@@ -8,9 +8,9 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
 
 // Estado del préstamo
 export enum PrestamoEstado {
-  ACTIVO = "activo",
-  VENCIDO = "vencido",
-  DEVUELTO = "devuelto"
+  ACTIVO = 'ACTIVO',
+  DEVUELTO = 'DEVUELTO',
+  VENCIDO = 'VENCIDO'
 }
 
 // Ubicación física del libro
@@ -24,7 +24,8 @@ export interface Libro {
   id: string;
   titulo: string;
   autor: string;
-  isbn?: string;
+  isbn: string;
+  disponible: boolean;
   editorial?: string;
   anioPublicacion?: number;
   genero?: string;
@@ -36,16 +37,19 @@ export interface Libro {
 
 // Modelo de Préstamo
 export interface Prestamo {
+  autor: any;
   id: string;
   libroId: string;
   usuarioId: string;
-  fechaPrestamo: string; // Formato fecha YYYY-MM-DD
-  fechaDevolucionPrevista: string; // Formato fecha YYYY-MM-DD
-  fechaDevolucionReal?: string; // Formato fecha YYYY-MM-DD, sólo cuando se devuelve
+  usuarioNombre: string; // Nombre del usuario
+  fechaPrestamo: string;
+  LibroNombre: string; // Nombre del libro
+  fechaDevolucionPrevista: string;
+  fechaDevolucionReal?: string;
   estado: PrestamoEstado;
-  renovaciones_hechas: number; // Número de veces que se ha renovado
-  diasRetraso?: number; // Días de retraso, si aplica
-  notas?: string; // Notas adicionales sobre el préstamo
+  renovaciones_hechas: number;
+  diasRetraso?: number;
+  notas?: string;
 }
 
 // Roles de usuario
@@ -79,27 +83,23 @@ export interface Usuario {
   limitePrestamos: number; // Número máximo de préstamos simultáneos permitidos
 }
 
-
-
 // Enums y definición de interfaces
-
-// Modelo de Prestamo
-export interface Prestamo {
-  id: string;
-  libroId: string;
-  usuarioId: string;
-  fechaPrestamo: string; // Formato fecha YYYY-MM-DD
-  fechaDevolucionPrevista: string; // Formato fecha YYYY-MM-DD
-  fechaDevolucionReal?: string; // Formato fecha YYYY-MM-DD, sólo cuando se devuelve
-  estado: PrestamoEstado;
-  renovaciones_hechas: number; // Número de veces que se ha renovado
-  diasRetraso?: number; // Días de retraso, si aplica
-  notas?: string; // Notas adicionales sobre el préstamo
-}
 
 // Información adicional que se obtendrá de otros endpoints
 export interface InfoAdicionalPrestamo {
   libro: string;
   autor: string;
   usuario: string;
+}
+
+export interface Paginacion {
+  paginaActual: number;
+  totalPaginas: number;
+  totalLibros: number;
+  librosPorPagina: number;
+}
+
+export interface LibrosResponse {
+  libros: Libro[];
+  paginacion: Paginacion;
 }

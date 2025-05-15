@@ -1,97 +1,34 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
 import { Chip } from "@heroui/chip";
 import { Input } from "@heroui/input";
 import { useNavigate } from "react-router-dom";
-import DropdownActionsLoans, { PrestamoDropdown } from "@/components/dropDownActionsLoans";
+import DropdownActionsLoans from "@/components/dropDownActionsLoans";
 import DefaultLayout from "@/layouts/default";
-import { PrestamoEstado } from "@/types";
+import { Prestamo, PrestamoEstado } from "@/types";
+import { getActiveLoans } from "@/actions/getActiveLoans";
 
-// Interfaz para los datos completos de préstamo en esta página
-interface PrestamoDatos extends PrestamoDropdown {
-  autor: string;
-  libro: string;
-  fechaPrestamo: string;
-  fechaDevolucion: string;
-  renovaciones: number;
-}
 
 export default function ActiveLoansPage() {
-  // Estado para el término de búsqueda
   const [searchTerm, setSearchTerm] = useState("");
+  const [prestamosCompletos, setPrestamosCompletos] = useState<Prestamo[]>([]);
   const navigate = useNavigate();
-  
-  // Datos de ejemplo - en un caso real vendrían de una API
-  const prestamosCompletos: PrestamoDatos[] = [
-    { 
-      id: "1", 
-      libro: "Cien años de soledad", 
-      autor: "Gabriel García Márquez", 
-      usuario: "Ana Rodríguez", 
-      usuarioId: "001", 
-      fechaPrestamo: "2025-03-01", 
-      fechaDevolucion: "2025-03-15", 
-      estado: PrestamoEstado.ACTIVO,
-      renovaciones: 0
-    },
-    { 
-      id: "2", 
-      libro: "El principito", 
-      autor: "Antoine de Saint-Exupéry", 
-      usuario: "Carlos Gómez", 
-      usuarioId: "002", 
-      fechaPrestamo: "2025-03-05", 
-      fechaDevolucion: "2025-03-19", 
-      estado: PrestamoEstado.ACTIVO,
-      renovaciones: 1
-    },
-    { 
-      id: "3", 
-      libro: "Don Quijote de la Mancha", 
-      autor: "Miguel de Cervantes", 
-      usuario: "María Fernández", 
-      usuarioId: "003", 
-      fechaPrestamo: "2025-03-08", 
-      fechaDevolucion: "2025-03-22", 
-      estado: PrestamoEstado.VENCIDO,
-      renovaciones: 2
-    },
-  ];
 
-  // Función de filtrado por búsqueda
+  useEffect(() => {
+    getActiveLoans().then(setPrestamosCompletos);
+  }, []);
+
   const filteredPrestamos = useCallback(() => {
     return prestamosCompletos.filter(prestamo => 
       searchTerm === "" || 
-      prestamo.libro.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      prestamo.libroId.toLowerCase().includes(searchTerm.toLowerCase()) || 
       prestamo.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      prestamo.usuario.toLowerCase().includes(searchTerm.toLowerCase())
+      prestamo.usuarioNombre.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [searchTerm, prestamosCompletos]);
 
-  // Obtener los préstamos filtrados
   const prestamos = filteredPrestamos();
-
-  // Handlers para las acciones del dropdown
-  const handleDevolver = (prestamoId: string | number) => {
-    alert(`Devolución del préstamo #${prestamoId} registrada con éxito`);
-  };
-
-  const handleRenovar = (prestamoId: string | number) => {
-    alert(`Préstamo #${prestamoId} renovado con éxito`);
-  };
-
-  const handleVerDetalles = (prestamoId: string | number) => {
-    navigate(`/detalles-prestamo/${prestamoId}`);
-  };
-
-  const handleVerPerfil = (usuarioId: string) => {
-    navigate(`/perfil-usuario/${usuarioId}`);
-  };
-
-  const handleVerHistorial = (usuarioId: string) => {
-    navigate(`/historial-usuario/${usuarioId}`);
-  };
 
   return (
     <DefaultLayout>
@@ -130,11 +67,11 @@ export default function ActiveLoansPage() {
               <TableBody emptyContent="No hay préstamos activos">
                 {prestamos.map((prestamo) => (
                   <TableRow key={prestamo.id}>
-                    <TableCell>{prestamo.libro}</TableCell>
+                    <TableCell>{prestamo.libroId}</TableCell>
                     <TableCell>{prestamo.autor}</TableCell>
-                    <TableCell>{prestamo.usuario}</TableCell>
+                    <TableCell>{prestamo.usuarioNombre}</TableCell>
                     <TableCell>{prestamo.fechaPrestamo}</TableCell>
-                    <TableCell>{prestamo.fechaDevolucion}</TableCell>
+                    <TableCell>{prestamo.fechaDevolucionReal}</TableCell>
                     <TableCell>
                       <Chip 
                         color={prestamo.estado === PrestamoEstado.VENCIDO ? "warning" : "primary"}
@@ -145,16 +82,9 @@ export default function ActiveLoansPage() {
                         {prestamo.estado}
                       </Chip>
                     </TableCell>
-                    <TableCell>{prestamo.renovaciones}/2</TableCell>
+                    <TableCell>{prestamo.renovaciones_hechas}/2</TableCell>
                     <TableCell>
-                      <DropdownActionsLoans 
-                        prestamo={prestamo}
-                        onDevolver={handleDevolver}
-                        onRenovar={handleRenovar}
-                        onVerDetalles={handleVerDetalles}
-                        onVerPerfil={handleVerPerfil}
-                        onVerHistorial={handleVerHistorial}
-                      />
+                      <DropdownActionsLoans {...prestamo} />
                     </TableCell>
                   </TableRow>
                 ))}
