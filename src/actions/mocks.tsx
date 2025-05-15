@@ -9,7 +9,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 2,
     ubicacion: LibroUbicacion.GRADO,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345345"
   },
   {
     id: 'L002',
@@ -18,7 +19,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 1,
     ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345346"
   },
   {
     id: 'L003',
@@ -27,7 +29,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 3,
     ubicacion: LibroUbicacion.GRADO,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345347"
   },
   {
     id: 'L004',
@@ -36,7 +39,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 0,
     ubicacion: LibroUbicacion.GRADO,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345348"
   },
   {
     id: 'L005',
@@ -45,7 +49,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 2,
     ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345349"
   },
   {
     id: 'L006',
@@ -54,7 +59,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 1,
     ubicacion: LibroUbicacion.GRADO,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345350"
   },
   {
     id: 'L007',
@@ -63,7 +69,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 4,
     ubicacion: LibroUbicacion.GRADO,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345351"
   },
   {
     id: 'L008',
@@ -72,7 +79,8 @@ export const LIBROS_LISTA: Libro[] = [
     disponibles: 2,
     ubicacion: LibroUbicacion.CIENCIAS_BIOMEDICAS,
     isbn: "",
-    disponible: false
+    disponible: false,
+    codigo: "324245345352"
   }
 ];
 

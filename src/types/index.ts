@@ -21,6 +21,7 @@ export enum LibroUbicacion {
 
 // Modelo de Libro
 export interface Libro {
+  codigo: string;
   id: string;
   titulo: string;
   autor: string;
