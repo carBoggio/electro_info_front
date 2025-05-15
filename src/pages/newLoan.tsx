@@ -18,6 +18,7 @@ export default function NewLoanPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedBook, setSelectedBook] = useState<Libro | null>(null);
   const [userIdentified, setUserIdentified] = useState<boolean>(false);
+  const [usuarioId, setUsuarioId] = useState<string>(""); // <-- NUEVO
   const [scanningNfc, setScanningNfc] = useState<boolean>(false);
   const [barcodeNumber, setBarcodeNumber] = useState<string>("");
   const [duracionDias, setDuracionDias] = useState<string>("14");
@@ -26,9 +27,6 @@ export default function NewLoanPage() {
   const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);
   const [loadingLibros, setLoadingLibros] = useState<boolean>(true);
   const [scanningError, setScanningError] = useState<string>("");
-  
-  // ID del usuario simulado para la demo
-  const usuarioId = "12345678";
 
   // Cargar libros disponibles al montar el componente
   useEffect(() => {
@@ -62,10 +60,10 @@ export default function NewLoanPage() {
 
   const handleScanNfc = () => {
     setScanningNfc(true);
-    // Simulación de escaneo NFC
     setTimeout(() => {
       setScanningNfc(false);
       setUserIdentified(true);
+      setUsuarioId("001"); // o el ID real leído
     }, 2000);
   };
 
@@ -76,15 +74,10 @@ export default function NewLoanPage() {
       setIsLoading(true);
       setScanningError("");
       console.log("Código de barras escaneado:", barcode);
-      
-      // Buscar el libro por código usando la nueva acción
       const result = await getBookByCode(barcode);
-      
       if (result.success && result.libro) {
-        // Libro encontrado, seleccionarlo
         handleSelectBook(result.libro);
       } else {
-        // Libro no encontrado, mostrar error
         setScanningError(result.message);
       }
     } catch (error) {
@@ -97,25 +90,20 @@ export default function NewLoanPage() {
 
   const handleConfirmPrestamo = async () => {
     if (!selectedBook || !userIdentified) return;
-    
     try {
       setIsConfirming(true);
-      
-      // Llamar a la acción makeLoan
+      // Usar usuarioId del estado
       const result = await makeLoan(
         selectedBook,
         usuarioId,
         parseInt(duracionDias),
         barcodeNumber
       );
-      
       if (result.success) {
-        // Mostrar mensaje de éxito
         alert(result.message);
-        
-        // Reiniciar el formulario
         setSelectedBook(null);
         setUserIdentified(false);
+        setUsuarioId(""); // limpiar usuarioId
         setBarcodeNumber("");
         setDuracionDias("14");
         setScanningError("");
@@ -171,7 +159,10 @@ export default function NewLoanPage() {
                   <Button 
                     color="danger" 
                     variant="light" 
-                    onClick={() => setUserIdentified(false)}
+                    onClick={() => {
+                      setUserIdentified(false);
+                      setUsuarioId("");
+                    }}
                     className="mt-4"
                   >
                     Cambiar usuario
@@ -192,26 +183,20 @@ export default function NewLoanPage() {
               {!selectedBook ? (
                 <>
                   <div className="flex flex-col items-center gap-6 mb-4">
-                    {/* Implementación del BarcodeScanner */}
                     <BarcodeScanner 
                       onScan={handleBarcodeScanned} 
                       buttonText="Escanear Código de Barras"
-                      autoClose={true} // Se cerrará automáticamente después de escanear
+                      autoClose={true}
                     />
-                    
                     {isLoading && (
                       <p className="text-default-600">Buscando libro con código...</p>
                     )}
-                    
                     {scanningError && (
                       <p className="text-danger">{scanningError}</p>
                     )}
-                    
                     <Divider className="my-4 w-full" />
-                    
                     <p className="text-default-500">o busca el libro manualmente:</p>
                   </div>
-                  
                   <div className="w-full">
                     <Input
                       placeholder="Buscar por título o autor..."
@@ -219,7 +204,6 @@ export default function NewLoanPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="mb-4"
                     />
-                    
                     {loadingLibros ? (
                       <div className="flex justify-center p-8">
                         <p>Cargando libros disponibles...</p>
@@ -298,7 +282,6 @@ export default function NewLoanPage() {
                   height={270}
                   className="object-cover rounded-md"
                 />
-                
                 <div className="space-y-4 flex-1">
                   <h3 className="text-2xl font-bold">{selectedBook.titulo}</h3>
                   <p className="text-xl text-default-500">{selectedBook.autor}</p>
@@ -309,9 +292,7 @@ export default function NewLoanPage() {
                         : "Biblioteca de Ciencias Biomédicas"
                     }
                   </p>
-                  
                   <Divider />
-                  
                   <div>
                     <h4 className="text-lg font-medium mb-2">Duración del préstamo</h4>
                     <RadioGroup 

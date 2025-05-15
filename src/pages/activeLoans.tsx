@@ -3,7 +3,6 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
 import { Chip } from "@heroui/chip";
 import { Input } from "@heroui/input";
-import { useNavigate } from "react-router-dom";
 import DropdownActionsLoans from "@/components/dropDownActionsLoans";
 import DefaultLayout from "@/layouts/default";
 import { Prestamo, PrestamoEstado } from "@/types";
@@ -13,7 +12,6 @@ import { getActiveLoans } from "@/actions/getActiveLoans";
 export default function ActiveLoansPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [prestamosCompletos, setPrestamosCompletos] = useState<Prestamo[]>([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     getActiveLoans().then(setPrestamosCompletos);

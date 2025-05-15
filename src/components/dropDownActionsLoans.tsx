@@ -1,4 +1,4 @@
-import { Prestamo, PrestamoEstado } from "@/types";
+import { Prestamo } from "@/types";
 import { 
   Dropdown, 
   DropdownTrigger, 
