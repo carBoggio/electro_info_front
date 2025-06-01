@@ -5,7 +5,7 @@ import { Chip } from "@heroui/chip";
 import { Pagination } from "@heroui/pagination";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
-import { useNavigate } from "react-router-dom";
+
 import DropdownActionsLoans from "@/components/dropDownActionsLoans";
 import DefaultLayout from "@/layouts/default";
 import { Prestamo, PrestamoEstado } from "@/types";
@@ -25,7 +25,6 @@ export default function LoansHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [estadoFilter, setEstadoFilter] = useState("todos");
-  const navigate = useNavigate();
 
   // Cargar préstamos desde la API
   useEffect(() => {

@@ -5,7 +5,7 @@ import { Chip } from "@heroui/chip";
 import DefaultLayout from "@/layouts/default";
 import { useState, useEffect } from "react";
 import { Prestamo, PrestamoEstado } from "@/types";
-import { getPrestamo } from "@/actions/getPrestamo";
+import { getLoan } from "@/actions/getPrestamo";
 import { returnLoan } from "@/actions/returnLoan";
 
 export default function ReturnLoanPage() {
@@ -23,7 +23,7 @@ export default function ReturnLoanPage() {
       
       try {
         setIsLoading(true);
-        const data = await getPrestamo(loanId);
+        const data = await getLoan(loanId);
         setPrestamo(data);
       } catch (err) {
         setError("Error al cargar los datos del préstamo");

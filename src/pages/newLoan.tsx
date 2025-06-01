@@ -8,9 +8,9 @@ import { Divider } from "@heroui/divider";
 import { Image } from "@heroui/image";
 
 import DefaultLayout from "@/layouts/default";
-import { Libro, LibroUbicacion } from "@/types";
+import { Libro } from "@/types";
 import BarcodeScanner from "@/components/BarcodeScanner";
-import { makeLoan } from "@/actions/makeLoan";
+import { makeLoan } from "@/actions/MakeLoan";
 import { getAllBooks } from "@/actions/getAllBooks";
 import { getBookByCode } from "@/actions/getBookByCode";
 
@@ -94,10 +94,9 @@ export default function NewLoanPage() {
       setIsConfirming(true);
       // Usar usuarioId del estado
       const result = await makeLoan(
-        selectedBook,
-        usuarioId,
-        parseInt(duracionDias),
-        barcodeNumber
+        selectedBook.id,
+        14,
+        usuarioId
       );
       if (result.success) {
         alert(result.message);
@@ -232,7 +231,7 @@ export default function NewLoanPage() {
                               <TableCell>{libro.titulo}</TableCell>
                               <TableCell>{libro.autor}</TableCell>
                               <TableCell>{libro.genero}</TableCell>
-                              <TableCell>{libro.ubicacion === LibroUbicacion.GRADO ? "Grado" : "Ciencias Biomédicas"}</TableCell>
+                              <TableCell>{libro.ubicacion}</TableCell>
                               <TableCell>{libro.disponibles}</TableCell>
                             </TableRow>
                           ))}
@@ -287,9 +286,7 @@ export default function NewLoanPage() {
                   <p className="text-xl text-default-500">{selectedBook.autor}</p>
                   <p className="text-default-500">
                     <span className="font-medium">Ubicación:</span> {
-                      selectedBook.ubicacion === LibroUbicacion.GRADO 
-                        ? "Biblioteca de Grado" 
-                        : "Biblioteca de Ciencias Biomédicas"
+                      selectedBook.ubicacion
                     }
                   </p>
                   <Divider />

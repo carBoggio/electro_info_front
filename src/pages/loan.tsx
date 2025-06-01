@@ -6,7 +6,7 @@ import { Link } from "@heroui/link";
 import DefaultLayout from "@/layouts/default";
 import { useState, useEffect } from "react";
 import { Prestamo, PrestamoEstado } from "@/types";
-import { getPrestamo } from "@/actions/getPrestamo";
+import { getLoan } from "@/actions/getPrestamo";
 
 export default function LoanPage() {
   const { loanId } = useParams();
@@ -21,7 +21,7 @@ export default function LoanPage() {
       
       try {
         setIsLoading(true);
-        const data = await getPrestamo(loanId);
+        const data = await getLoan(loanId);
         setPrestamo(data);
       } catch (err) {
         setError("Error al cargar los datos del préstamo");

@@ -1,5 +1,5 @@
-export async function basicFetch(url: string, method: "GET" | "POST", body?: any) {
-  const baseUrl = process.env.BASE_URL || "";
+export async function basicFetch(url: string, method: "GET" | "POST" | "DELETE", body?: any) {
+  const baseUrl = import.meta.env.VITE_BASE_URL || "";
   const fullUrl = `${baseUrl}${url}`;
 
   const options: RequestInit = {

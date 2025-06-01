@@ -13,12 +13,6 @@ export enum PrestamoEstado {
   VENCIDO = 'VENCIDO'
 }
 
-// Ubicación física del libro
-export enum LibroUbicacion {
-  GRADO = "grado",
-  CIENCIAS_BIOMEDICAS = "ciencias_biomedicas"
-}
-
 // Modelo de Libro
 export interface Libro {
   codigo: string;
@@ -33,7 +27,7 @@ export interface Libro {
   disponibles: number;
   imagen?: string;
   descripcion?: string;
-  ubicacion: LibroUbicacion; // Ubicación física en la biblioteca
+  ubicacion: string
 }
 
 // Modelo de Préstamo

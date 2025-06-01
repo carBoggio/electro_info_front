@@ -2,10 +2,10 @@ import { Libro } from "@/types";
 import { basicFetch } from "./BasicFetch";
 
 interface MakeLoanRequest {
-  libroId: string;
+  barcode: string;
   usuarioId: string;
   duracionDias: number;
-  barcode?: string;
+
 }
 
 interface MakeLoanResponse {
@@ -19,20 +19,19 @@ interface MakeLoanResponse {
 }
 
 export const makeLoan = async (
-  libro: Libro,
+
   usuarioId: string,
   duracionDias: number,
-  barcode?: string
+  barcode: string
 ): Promise<MakeLoanResponse> => {
   try {
     const request: MakeLoanRequest = {
-      libroId: libro.id,
+      barcode,
       usuarioId,
-      duracionDias,
-      barcode
+      duracionDias
     };
 
-    const response = await basicFetch('/api/prestamos', 'POST', request);
+    const response = await basicFetch('/api/loans', 'POST', request);
     return response as MakeLoanResponse;
   } catch (error) {
     console.error("Error al crear el préstamo:", error);

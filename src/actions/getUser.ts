@@ -1,5 +1,5 @@
 import { Usuario, UsuarioRol, UsuarioEstado, PrestamoEstado } from "@/types";
-import { basicFetch } from "./BasicFetch";
+
 
 export async function getUser(userId: string): Promise<Usuario> {
   // Mock data for development

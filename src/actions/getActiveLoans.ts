@@ -1,7 +1,13 @@
-import { PRESTAMOS_BASE } from "@/actions/mocks";
-import { Prestamo } from "@/types";
+import { Prestamo, PrestamoEstado } from "@/types";
+import { getAllLoans } from "./getAllLoans";
 
 export const getActiveLoans = async (): Promise<Prestamo[]> => {
-  // Filtra solo los préstamos activos
-  return PRESTAMOS_BASE.filter(p => p.estado === "ACTIVO");
+  try {
+    // Obtener todos los préstamos y filtrar solo los activos
+    const todosLosPrestamos = await getAllLoans();
+    return todosLosPrestamos.filter(prestamo => prestamo.estado === PrestamoEstado.ACTIVO);
+  } catch (error) {
+    console.error("Error al obtener préstamos activos:", error);
+    return [];
+  }
 };
