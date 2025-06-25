@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Service Workers</title>
+</head>
+<body>
+    <h1>Service Worker Cleanup</h1>
+    <button onclick="clearServiceWorkers()">Clear All Service Workers</button>
+    <div id="status"></div>
+
+    <script>
+        function clearServiceWorkers() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    let cleared = 0;
+                    for(let registration of registrations) {
+                        registration.unregister();
+                        cleared++;
+                    }
+                    document.getElementById('status').innerHTML = `Cleared ${cleared} service workers`;
+                });
+            } else {
+                document.getElementById('status').innerHTML = 'No service workers found';
+            }
+        }
+
+        // Auto-clear on page load
+        window.onload = function() {
+            clearServiceWorkers();
+        };
+    </script>
+</body>
+</html> 

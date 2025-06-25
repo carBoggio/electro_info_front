@@ -10,7 +10,6 @@ import { getLoan } from "@/actions/getPrestamo";
 
 export default function LoanPage() {
   const { loanId } = useParams();
-  const navigate = useNavigate();
   const [prestamo, setPrestamo] = useState<Prestamo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

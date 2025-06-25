@@ -15,6 +15,10 @@ export const siteConfig = {
     {
       label: "Préstamos Vencidos",
       href: "/prestamos-vencidos",
+    },
+    {
+      label: "Libros",
+      href: "/libros",
     }
   ],
   navMenuItems: [
@@ -29,6 +33,10 @@ export const siteConfig = {
     {
       label: "Préstamos Vencidos",
       href: "/prestamos-vencidos",
+    },
+    {
+      label: "Libros",
+      href: "/libros",
     },
     {
       label: "Nuevo Préstamo",
