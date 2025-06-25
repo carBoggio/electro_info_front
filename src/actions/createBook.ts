@@ -1,11 +1,9 @@
 import { basicFetch } from "./BasicFetch";
 
 export interface CreateBookData {
-  code: string;
-  title: string;
+  name: string;
   author: string;
-  category: string;
-  campus: string;
+  campus_id: number;
 }
 
 export interface CreateBookResponse {
@@ -13,12 +11,10 @@ export interface CreateBookResponse {
   message: string;
   book?: {
     id: string;
-    code: string;
-    title: string;
+    name: string;
     author: string;
-    category: string;
-    campus: string;
-    available: boolean;
+    campus_id: number;
+    campus_name: string;
   };
 }
 

@@ -3,72 +3,112 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
+import { Select, SelectItem } from "@heroui/select";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
 import { getAllBooks } from "@/actions/getAllBooks";
 import { createBook, CreateBookData } from "@/actions/createBook";
 import { deleteBook } from "@/actions/deleteBook";
+import { getCampuses, Campus } from "@/actions/getCampuses";
 import { Libro } from "@/types";
 import DefaultLayout from "@/layouts/default";
 
 export default function BooksPage() {
   const [books, setBooks] = useState<Libro[]>([]);
+  const [campuses, setCampuses] = useState<Campus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [campusesLoading, setCampusesLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState<string>("");
   const [filterCampus, setFilterCampus] = useState<string>("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deleteBookId, setDeleteBookId] = useState("");
   const [createFormData, setCreateFormData] = useState<CreateBookData>({
-    code: "",
-    title: "",
+    name: "",
     author: "",
-    category: "",
-    campus: "",
+    campus_id: 0,
   });
 
-  // Cargar libros al montar el componente
+  // Cargar libros y campuses al montar el componente
   useEffect(() => {
-    loadBooks();
+    loadData();
   }, []);
 
-  const loadBooks = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const response = await getAllBooks();
-      setBooks(response || []);
+      setCampusesLoading(true);
+      
+      const [booksResponse, campusesResponse] = await Promise.all([
+        getAllBooks(),
+        getCampuses()
+      ]);
+      
+      console.log("Books response:", booksResponse);
+      console.log("Campuses response:", campusesResponse);
+      console.log("Respuesta cruda de getAllBooks:", booksResponse);
+      
+      // Verificar que las respuestas sean arrays válidos
+      if (Array.isArray(booksResponse)) {
+        setBooks(booksResponse);
+      } else {
+        console.error("Books response is not an array:", booksResponse);
+        setBooks([]);
+      }
+      
+      if (Array.isArray(campusesResponse)) {
+        setCampuses(campusesResponse);
+      } else {
+        console.error("Campuses response is not an array:", campusesResponse);
+        setCampuses([]);
+      }
+      
     } catch (error) {
-      console.error("Error loading books:", error);
+      console.error("Error loading data:", error);
+      setBooks([]);
+      setCampuses([]);
     } finally {
       setLoading(false);
+      setCampusesLoading(false);
     }
   };
 
   // Filtrar libros
   const filteredBooks = books.filter((book) => {
     const matchesSearch = 
-      book.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.codigo.toLowerCase().includes(searchTerm.toLowerCase());
+      book.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.autor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = !filterCategory || book.genero === filterCategory;
     const matchesCampus = !filterCampus || book.ubicacion === filterCampus;
     
-    return matchesSearch && matchesCategory && matchesCampus;
+    return matchesSearch && matchesCampus;
   });
-
-  // Obtener categorías y campus únicos
-  const categories = [...new Set(books.map(book => book.genero).filter(Boolean))];
-  const campuses = [...new Set(books.map(book => book.ubicacion).filter(Boolean))];
 
   // Crear libro
   const handleCreateBook = async () => {
+    // Validar campos requeridos
+    if (!createFormData.name.trim()) {
+      alert("Por favor ingrese el nombre del libro");
+      return;
+    }
+    if (!createFormData.author.trim()) {
+      alert("Por favor ingrese el autor del libro");
+      return;
+    }
+    if (!createFormData.campus_id) {
+      alert("Por favor seleccione un campus");
+      return;
+    }
+
     try {
-      const response = await createBook(createFormData);
+      const response = await createBook({
+        ...createFormData,
+        campus_id: Number(createFormData.campus_id)
+      });
       if (response.success) {
         setShowCreateForm(false);
-        setCreateFormData({ code: "", title: "", author: "", category: "", campus: "" });
-        loadBooks();
+        setCreateFormData({ name: "", author: "", campus_id: 0 });
+        await loadData(); // Recargar datos
       } else {
         alert(response.message);
       }
@@ -85,7 +125,7 @@ export default function BooksPage() {
       if (response.success) {
         setShowDeleteForm(false);
         setDeleteBookId("");
-        loadBooks();
+        await loadData(); // Recargar datos
       } else {
         alert(response.message);
       }
@@ -93,6 +133,12 @@ export default function BooksPage() {
       console.error("Error deleting book:", error);
       alert("Error al eliminar el libro");
     }
+  };
+
+  // Cerrar formulario de crear
+  const handleCloseCreateForm = () => {
+    setShowCreateForm(false);
+    setCreateFormData({ name: "", author: "", campus_id: 0 });
   };
 
   return (
@@ -112,32 +158,36 @@ export default function BooksPage() {
             <Button 
               color="primary" 
               onClick={() => setShowCreateForm(true)}
+              isDisabled={campusesLoading}
             >
               Agregar Libro
             </Button>
           </CardHeader>
           <CardBody>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Input
                 placeholder="Buscar por título, autor o código..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Input
-                placeholder="Filtrar por categoría"
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-              />
-              <Input
+              <Select
                 placeholder="Filtrar por campus"
-                value={filterCampus}
-                onChange={(e) => setFilterCampus(e.target.value)}
-              />
+                selectedKeys={filterCampus ? [filterCampus] : []}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys)[0] as string;
+                  setFilterCampus(selected || "");
+                }}
+              >
+                {campuses.map((campus) => (
+                  <SelectItem key={campus.name}>
+                    {campus.name}
+                  </SelectItem>
+                ))}
+              </Select>
               <Button 
                 variant="flat" 
                 onClick={() => {
                   setSearchTerm("");
-                  setFilterCategory("");
                   setFilterCampus("");
                 }}
               >
@@ -163,7 +213,6 @@ export default function BooksPage() {
                   <TableColumn>CÓDIGO</TableColumn>
                   <TableColumn>TÍTULO</TableColumn>
                   <TableColumn>AUTOR</TableColumn>
-                  <TableColumn>CATEGORÍA</TableColumn>
                   <TableColumn>CAMPUS</TableColumn>
                   <TableColumn>ESTADO</TableColumn>
                   <TableColumn>ACCIONES</TableColumn>
@@ -174,11 +223,6 @@ export default function BooksPage() {
                       <TableCell>{book.codigo}</TableCell>
                       <TableCell className="font-medium">{book.titulo}</TableCell>
                       <TableCell>{book.autor}</TableCell>
-                      <TableCell>
-                        <Chip color="primary" variant="flat" size="sm">
-                          {book.genero || "Sin categoría"}
-                        </Chip>
-                      </TableCell>
                       <TableCell>{book.ubicacion}</TableCell>
                       <TableCell>
                         <Chip 
@@ -212,22 +256,17 @@ export default function BooksPage() {
 
         {/* Formulario de crear libro */}
         {showCreateForm && (
-          <Card className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" shadow="lg" radius="lg">
-            <CardBody className="w-full max-w-md">
-              <h3 className="text-xl font-semibold mb-4">Agregar Nuevo Libro</h3>
-              <div className="space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <Card className="w-full max-w-md m-4" shadow="lg" radius="lg">
+              <CardHeader>
+                <h3 className="text-xl font-semibold">Agregar Nuevo Libro</h3>
+              </CardHeader>
+              <CardBody className="space-y-4">
                 <Input
-                  label="Código del libro"
-                  placeholder="Ingrese el código del libro"
-                  value={createFormData.code}
-                  onChange={(e) => setCreateFormData({...createFormData, code: e.target.value})}
-                  isRequired
-                />
-                <Input
-                  label="Título"
-                  placeholder="Ingrese el título del libro"
-                  value={createFormData.title}
-                  onChange={(e) => setCreateFormData({...createFormData, title: e.target.value})}
+                  label="Nombre del libro"
+                  placeholder="Ingrese el nombre del libro"
+                  value={createFormData.name}
+                  onChange={(e) => setCreateFormData({...createFormData, name: e.target.value})}
                   isRequired
                 />
                 <Input
@@ -237,68 +276,77 @@ export default function BooksPage() {
                   onChange={(e) => setCreateFormData({...createFormData, author: e.target.value})}
                   isRequired
                 />
-                <Input
-                  label="Categoría"
-                  placeholder="Ingrese la categoría del libro"
-                  value={createFormData.category}
-                  onChange={(e) => setCreateFormData({...createFormData, category: e.target.value})}
-                  isRequired
-                />
-                <Input
+                <Select
                   label="Campus"
-                  placeholder="Ingrese el campus del libro"
-                  value={createFormData.campus}
-                  onChange={(e) => setCreateFormData({...createFormData, campus: e.target.value})}
+                  placeholder="Seleccione un campus"
+                  selectedKeys={createFormData.campus_id ? [String(createFormData.campus_id)] : []}
+                  onSelectionChange={(keys) => {
+                    const selected = Array.from(keys)[0] as string;
+                    setCreateFormData({...createFormData, campus_id: Number(selected) || 0});
+                  }}
                   isRequired
-                />
+                  isLoading={campusesLoading}
+                >
+                  {campuses.map((campus) => (
+                    <SelectItem key={campus.id}>
+                      {campus.name}
+                    </SelectItem>
+                  ))}
+                </Select>
+
                 <div className="flex gap-2 pt-4">
                   <Button 
                     color="primary" 
                     onClick={handleCreateBook}
                     className="flex-1"
+                    isLoading={false}
                   >
                     Crear Libro
                   </Button>
                   <Button 
                     color="danger" 
                     variant="flat" 
-                    onClick={() => setShowCreateForm(false)}
+                    onClick={handleCloseCreateForm}
                     className="flex-1"
                   >
                     Cancelar
                   </Button>
                 </div>
-              </div>
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+          </div>
         )}
 
         {/* Formulario de eliminar libro */}
         {showDeleteForm && (
-          <Card className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" shadow="lg" radius="lg">
-            <CardBody className="w-full max-w-md">
-              <h3 className="text-xl font-semibold mb-4">Confirmar Eliminación</h3>
-              <p className="mb-4">¿Estás seguro de que quieres eliminar este libro? Esta acción no se puede deshacer.</p>
-              <div className="flex gap-2">
-                <Button 
-                  color="danger" 
-                  onClick={handleDeleteBook}
-                  className="flex-1"
-                >
-                  Eliminar
-                </Button>
-                <Button 
-                  variant="flat" 
-                  onClick={() => setShowDeleteForm(false)}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <Card className="w-full max-w-md m-4" shadow="lg" radius="lg">
+              <CardHeader>
+                <h3 className="text-xl font-semibold">Confirmar Eliminación</h3>
+              </CardHeader>
+              <CardBody>
+                <p className="mb-4">¿Estás seguro de que quieres eliminar este libro? Esta acción no se puede deshacer.</p>
+                <div className="flex gap-2">
+                  <Button 
+                    color="danger" 
+                    onClick={handleDeleteBook}
+                    className="flex-1"
+                  >
+                    Eliminar
+                  </Button>
+                  <Button 
+                    variant="flat" 
+                    onClick={() => setShowDeleteForm(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
         )}
       </div>
     </DefaultLayout>
   );
-} 
+}
