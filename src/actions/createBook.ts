@@ -1,9 +1,10 @@
 import { basicFetch } from "./BasicFetch";
 
 export interface CreateBookData {
+  id: string;
   name: string;
   author: string;
-  campus_id: number;
+  campus: string;
 }
 
 export interface CreateBookResponse {

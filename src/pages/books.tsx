@@ -23,9 +23,10 @@ export default function BooksPage() {
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deleteBookId, setDeleteBookId] = useState("");
   const [createFormData, setCreateFormData] = useState<CreateBookData>({
+    id: "",
     name: "",
     author: "",
-    campus_id: 0,
+    campus: "",
   });
 
   // Cargar libros y campuses al montar el componente
@@ -87,6 +88,10 @@ export default function BooksPage() {
   // Crear libro
   const handleCreateBook = async () => {
     // Validar campos requeridos
+    if (!createFormData.id.trim()) {
+      alert("Por favor ingrese el ID del libro");
+      return;
+    }
     if (!createFormData.name.trim()) {
       alert("Por favor ingrese el nombre del libro");
       return;
@@ -95,19 +100,16 @@ export default function BooksPage() {
       alert("Por favor ingrese el autor del libro");
       return;
     }
-    if (!createFormData.campus_id) {
+    if (!createFormData.campus) {
       alert("Por favor seleccione un campus");
       return;
     }
 
     try {
-      const response = await createBook({
-        ...createFormData,
-        campus_id: Number(createFormData.campus_id)
-      });
+      const response = await createBook(createFormData);
       if (response.success) {
         setShowCreateForm(false);
-        setCreateFormData({ name: "", author: "", campus_id: 0 });
+        setCreateFormData({ id: "", name: "", author: "", campus: "" });
         await loadData(); // Recargar datos
       } else {
         alert(response.message);
@@ -138,7 +140,7 @@ export default function BooksPage() {
   // Cerrar formulario de crear
   const handleCloseCreateForm = () => {
     setShowCreateForm(false);
-    setCreateFormData({ name: "", author: "", campus_id: 0 });
+    setCreateFormData({ id: "", name: "", author: "", campus: "" });
   };
 
   return (
@@ -263,6 +265,13 @@ export default function BooksPage() {
               </CardHeader>
               <CardBody className="space-y-4">
                 <Input
+                  label="ID del libro"
+                  placeholder="Ingrese el ID del libro"
+                  value={createFormData.id}
+                  onChange={(e) => setCreateFormData({...createFormData, id: e.target.value})}
+                  isRequired
+                />
+                <Input
                   label="Nombre del libro"
                   placeholder="Ingrese el nombre del libro"
                   value={createFormData.name}
@@ -279,16 +288,16 @@ export default function BooksPage() {
                 <Select
                   label="Campus"
                   placeholder="Seleccione un campus"
-                  selectedKeys={createFormData.campus_id ? [String(createFormData.campus_id)] : []}
+                  selectedKeys={createFormData.campus ? [createFormData.campus] : []}
                   onSelectionChange={(keys) => {
                     const selected = Array.from(keys)[0] as string;
-                    setCreateFormData({...createFormData, campus_id: Number(selected) || 0});
+                    setCreateFormData({...createFormData, campus: selected || ""});
                   }}
                   isRequired
                   isLoading={campusesLoading}
                 >
                   {campuses.map((campus) => (
-                    <SelectItem key={campus.id}>
+                    <SelectItem key={campus.name}>
                       {campus.name}
                     </SelectItem>
                   ))}
