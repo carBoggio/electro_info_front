@@ -9,12 +9,15 @@ import { getAllBooks } from "@/actions/getAllBooks";
 import { createBook, CreateBookData } from "@/actions/createBook";
 import { deleteBook } from "@/actions/deleteBook";
 import { getCampuses, Campus } from "@/actions/getCampuses";
-import { Libro } from "@/types";
+import { getActiveLoans, isBookInActiveLoans } from "@/actions/getActiveLoans";
+import { Libro, Prestamo } from "@/types";
 import DefaultLayout from "@/layouts/default";
 
 export default function BooksPage() {
   const [books, setBooks] = useState<Libro[]>([]);
   const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [activeLoans, setActiveLoans] = useState<Prestamo[]>([]);
+  const [bookAvailability, setBookAvailability] = useState<{[key: string]: boolean}>({});
   const [loading, setLoading] = useState(true);
   const [campusesLoading, setCampusesLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -39,21 +42,32 @@ export default function BooksPage() {
       setLoading(true);
       setCampusesLoading(true);
       
-      const [booksResponse, campusesResponse] = await Promise.all([
+      const [booksResponse, campusesResponse, activeLoansResponse] = await Promise.all([
         getAllBooks(),
-        getCampuses()
+        getCampuses(),
+        getActiveLoans()
       ]);
       
       console.log("Books response:", booksResponse);
       console.log("Campuses response:", campusesResponse);
+      console.log("Active loans response:", activeLoansResponse);
       console.log("Respuesta cruda de getAllBooks:", booksResponse);
       
       // Verificar que las respuestas sean arrays válidos
       if (Array.isArray(booksResponse)) {
         setBooks(booksResponse);
+        
+        // Verificar disponibilidad de cada libro
+        const availabilityMap: {[key: string]: boolean} = {};
+        for (const book of booksResponse) {
+          const isInActiveLoans = await isBookInActiveLoans(book.id);
+          availabilityMap[book.id] = !isInActiveLoans;
+        }
+        setBookAvailability(availabilityMap);
       } else {
         console.error("Books response is not an array:", booksResponse);
         setBooks([]);
+        setBookAvailability({});
       }
       
       if (Array.isArray(campusesResponse)) {
@@ -62,11 +76,20 @@ export default function BooksPage() {
         console.error("Campuses response is not an array:", campusesResponse);
         setCampuses([]);
       }
+
+      if (Array.isArray(activeLoansResponse)) {
+        setActiveLoans(activeLoansResponse);
+      } else {
+        console.error("Active loans response is not an array:", activeLoansResponse);
+        setActiveLoans([]);
+      }
       
     } catch (error) {
       console.error("Error loading data:", error);
       setBooks([]);
       setCampuses([]);
+      setActiveLoans([]);
+      setBookAvailability({});
     } finally {
       setLoading(false);
       setCampusesLoading(false);
@@ -141,6 +164,11 @@ export default function BooksPage() {
   const handleCloseCreateForm = () => {
     setShowCreateForm(false);
     setCreateFormData({ id: "", name: "", author: "", campus: "" });
+  };
+
+  // Función para verificar si un libro está disponible
+  const isBookAvailable = (bookId: string): boolean => {
+    return bookAvailability[bookId] ?? true; // Si no está en el mapa, asumimos que está disponible
   };
 
   return (
@@ -228,11 +256,11 @@ export default function BooksPage() {
                       <TableCell>{book.ubicacion}</TableCell>
                       <TableCell>
                         <Chip 
-                          color={book.disponible ? "success" : "danger"} 
+                          color={isBookAvailable(book.id) ? "success" : "danger"} 
                           variant="flat" 
                           size="sm"
                         >
-                          {book.disponible ? "Disponible" : "Prestado"}
+                          {isBookAvailable(book.id) ? "Disponible" : "No disponible"}
                         </Chip>
                       </TableCell>
                       <TableCell>
@@ -240,6 +268,7 @@ export default function BooksPage() {
                           color="danger"
                           size="sm"
                           variant="flat"
+                          isDisabled={!isBookAvailable(book.id)}
                           onClick={() => {
                             setDeleteBookId(book.id);
                             setShowDeleteForm(true);
