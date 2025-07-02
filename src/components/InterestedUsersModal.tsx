@@ -33,7 +33,7 @@ export default function InterestedUsersModal({ isOpen, onClose, setSelectedUserI
       const response = await getInterestedUsers();
       
       if (response.success && response.data) {
-        setRequests(response.data);
+        setRequests(response.data as Request[]);
       } else {
         setError(response.message || "Error al cargar usuarios interesados");
       }
