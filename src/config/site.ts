@@ -19,6 +19,10 @@ export const siteConfig = {
     {
       label: "Libros",
       href: "/libros",
+    },
+    {
+      label: "Campus",
+      href: "/campus",
     }
   ],
   navMenuItems: [
@@ -37,6 +41,10 @@ export const siteConfig = {
     {
       label: "Libros",
       href: "/libros",
+    },
+    {
+      label: "Campus",
+      href: "/campus",
     },
     {
       label: "Nuevo Préstamo",

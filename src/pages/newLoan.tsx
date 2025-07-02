@@ -1,117 +1,78 @@
-import { useState, useEffect } from "react";
 import { Card, CardBody, CardHeader, CardFooter } from "@heroui/card";
 import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
-import { Radio, RadioGroup } from "@heroui/radio";
-import { Divider } from "@heroui/divider";
-import { Image } from "@heroui/image";
-
+import { Chip } from "@heroui/chip";
 import DefaultLayout from "@/layouts/default";
+import { useState, useEffect } from "react";
 import { Libro } from "@/types";
-import BarcodeScanner from "@/components/BarcodeScanner";
 import { makeLoan } from "@/actions/MakeLoan";
-import { getAllBooks } from "@/actions/getAllBooks";
 import { getBookByCode } from "@/actions/getBookByCode";
+import BookSelectionModal from "@/components/BookSelectionModal";
+import InterestedUsersModal from "@/components/InterestedUsersModal";
 
 export default function NewLoanPage() {
-  const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedBook, setSelectedBook] = useState<Libro | null>(null);
-  const [userIdentified, setUserIdentified] = useState<boolean>(false);
-  const [usuarioId, setUsuarioId] = useState<string>(""); // <-- NUEVO
-  const [scanningNfc, setScanningNfc] = useState<boolean>(false);
-  const [barcodeNumber, setBarcodeNumber] = useState<string>("");
-  const [duracionDias, setDuracionDias] = useState<string>("14");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isConfirming, setIsConfirming] = useState<boolean>(false);
-  const [librosDisponibles, setLibrosDisponibles] = useState<Libro[]>([]);
-  const [loadingLibros, setLoadingLibros] = useState<boolean>(true);
-  const [scanningError, setScanningError] = useState<string>("");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserName, setSelectedUserName] = useState<string>("");
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false);
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Cargar libros disponibles al montar el componente
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoadingLibros(true);
-        const books = await getAllBooks();
-        setLibrosDisponibles(books);
-      } catch (error) {
-        console.error("Error al cargar libros:", error);
-      } finally {
-        setLoadingLibros(false);
-      }
-    };
-
-    fetchBooks();
-  }, []);
-
-  // Filtrar libros según la búsqueda
-  const librosFilteredBySearch = searchTerm 
-    ? librosDisponibles.filter(libro => 
-        libro.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        libro.autor.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : librosDisponibles;
-
-  const handleSelectBook = (book: Libro) => {
-    setSelectedBook(book);
-    setScanningError("");
-  };
-
-  const handleScanNfc = () => {
-    setScanningNfc(true);
-    setTimeout(() => {
-      setScanningNfc(false);
-      setUserIdentified(true);
-      setUsuarioId("001"); // o el ID real leído
-    }, 2000);
-  };
-
-  // Función que maneja el escaneo del código de barras
-  const handleBarcodeScanned = async (barcode: string) => {
+  // Función para manejar la selección de libro
+  const handleBookSelection = async (bookId: string) => {
     try {
-      setBarcodeNumber(barcode);
-      setIsLoading(true);
-      setScanningError("");
-      console.log("Código de barras escaneado:", barcode);
-      const result = await getBookByCode(barcode);
-      if (result.success && result.libro) {
-        handleSelectBook(result.libro);
+      const bookResponse = await getBookByCode(bookId);
+      if (bookResponse.success && bookResponse.libro) {
+        setSelectedBook(bookResponse.libro);
+        setError(null);
       } else {
-        setScanningError(result.message);
+        setError("Error al obtener información del libro");
       }
-    } catch (error) {
-      console.error("Error al escanear código de barras:", error);
-      setScanningError("Error al procesar el código. Inténtelo nuevamente.");
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      setError("Error al obtener información del libro");
     }
   };
 
+  // Función para manejar la selección de usuario
+  const handleUserSelection = (userId: string) => {
+    setSelectedUserId(userId);
+    // Aquí podrías hacer una llamada para obtener el nombre del usuario
+    // Por ahora usamos el ID como nombre
+    setSelectedUserName(`Usuario ${userId}`);
+    setError(null);
+  };
+
+  // Función para confirmar el préstamo
   const handleConfirmPrestamo = async () => {
-    if (!selectedBook || !userIdentified) return;
+    if (!selectedBook || !selectedUserId) {
+      setError("Por favor selecciona un libro y un usuario");
+      return;
+    }
+
     try {
       setIsConfirming(true);
-      // Usar usuarioId del estado
+      setError(null);
+      setSuccessMessage(null);
+
       const result = await makeLoan(
-        selectedBook.id,
-        14,
-        usuarioId
+        selectedUserId,
+        14, // duración por defecto
+        selectedBook.id
       );
+
       if (result.success) {
-        alert(result.message);
+        setSuccessMessage(result.message);
+        // Limpiar selecciones
         setSelectedBook(null);
-        setUserIdentified(false);
-        setUsuarioId(""); // limpiar usuarioId
-        setBarcodeNumber("");
-        setDuracionDias("14");
-        setScanningError("");
+        setSelectedUserId("");
+        setSelectedUserName("");
       } else {
-        throw new Error("Error al realizar el préstamo");
+        setError(result.message || "Error al realizar el préstamo");
       }
     } catch (error) {
       console.error("Error al realizar el préstamo:", error);
-      alert("Ocurrió un error al realizar el préstamo. Inténtelo nuevamente.");
+      setError("Ocurrió un error al realizar el préstamo. Inténtelo nuevamente.");
     } finally {
       setIsConfirming(false);
     }
@@ -119,187 +80,136 @@ export default function NewLoanPage() {
 
   return (
     <DefaultLayout>
-      <div className="space-y-8">
+      <div className="space-y-8 py-8">
         <div className="flex flex-col gap-4">
           <h1 className="text-4xl font-bold">Nuevo Préstamo</h1>
-          <p className="text-lg text-default-500">
-            Escanea un libro y identifícate para realizar un préstamo
+          <p className="text-xl text-default-500">
+            Selecciona un libro y un usuario para crear un nuevo préstamo
           </p>
         </div>
 
-        {/* Tarjeta de identificación de usuario */}
-        <Card shadow="md" radius="lg" className="w-full">
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Identificación de usuario</h2>
-          </CardHeader>
-          <CardBody>
-            <div className="flex flex-col items-center py-4">
-              {!userIdentified ? (
-                <>
-                  <p className="text-lg mb-4 text-default-600">
-                    {scanningNfc 
-                      ? "Escaneando tarjeta NFC. Por favor, acerca tu tarjeta al lector..." 
-                      : "Esperando identificación del usuario"
-                    }
-                  </p>
-                  <Button
-                    color="primary"
-                    onClick={handleScanNfc}
-                    isLoading={scanningNfc}
-                  >
-                    {scanningNfc ? "Escaneando..." : "Escanear Tarjeta NFC"}
-                  </Button>
-                </>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <p className="text-lg text-success font-medium mb-2">Usuario identificado correctamente</p>
-                  <p className="text-xl font-bold">Laura González</p>
-                  <p className="text-default-500">Tarjeta Austral #{usuarioId}</p>
-                  <Button 
-                    color="danger" 
-                    variant="light" 
-                    onClick={() => {
-                      setUserIdentified(false);
-                      setUsuarioId("");
-                    }}
-                    className="mt-4"
-                  >
-                    Cambiar usuario
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
+        {successMessage && (
+          <div className="bg-success-50 border border-success-200 text-success rounded-lg p-4">
+            {successMessage}
+          </div>
+        )}
 
-        {/* Tarjeta de escaneo de libro */}
-        <Card shadow="md" radius="lg" className="w-full">
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Selección de libro</h2>
-          </CardHeader>
-          <CardBody>
-            <div className="flex flex-col items-center py-4">
-              {!selectedBook ? (
-                <>
-                  <div className="flex flex-col items-center gap-6 mb-4">
-                    <BarcodeScanner 
-                      onScan={handleBarcodeScanned} 
-                      buttonText="Escanear Código de Barras"
-                      autoClose={true}
-                    />
-                    {isLoading && (
-                      <p className="text-default-600">Buscando libro con código...</p>
-                    )}
-                    {scanningError && (
-                      <p className="text-danger">{scanningError}</p>
-                    )}
-                    <Divider className="my-4 w-full" />
-                    <p className="text-default-500">o busca el libro manualmente:</p>
-                  </div>
-                  <div className="w-full">
-                    <Input
-                      placeholder="Buscar por título o autor..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="mb-4"
-                    />
-                    {loadingLibros ? (
-                      <div className="flex justify-center p-8">
-                        <p>Cargando libros disponibles...</p>
-                      </div>
-                    ) : (
-                      <Table 
-                        aria-label="Tabla de libros disponibles"
-                        selectionMode="single"
-                        onRowAction={(key) => {
-                          const book = librosDisponibles.find(b => b.id === key.toString());
-                          if (book) {
-                            handleSelectBook(book);
-                          }
-                        }}
-                      >
-                        <TableHeader>
-                          <TableColumn>TÍTULO</TableColumn>
-                          <TableColumn>AUTOR</TableColumn>
-                          <TableColumn>GÉNERO</TableColumn>
-                          <TableColumn>UBICACIÓN</TableColumn>
-                          <TableColumn>DISPONIBLES</TableColumn>
-                        </TableHeader>
-                        <TableBody emptyContent="No hay libros disponibles">
-                          {librosFilteredBySearch.map((libro) => (
-                            <TableRow key={libro.id}>
-                              <TableCell>{libro.titulo}</TableCell>
-                              <TableCell>{libro.autor}</TableCell>
-                              <TableCell>{libro.genero}</TableCell>
-                              <TableCell>{libro.ubicacion}</TableCell>
-                              <TableCell>{libro.disponibles}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <p className="text-lg text-success font-medium mb-2">Libro seleccionado correctamente</p>
-                  <p className="text-xl font-bold">{selectedBook.titulo}</p>
-                  <p className="text-default-500">por {selectedBook.autor}</p>
-                  {barcodeNumber && (
-                    <p className="text-default-500 mt-2">Código: {barcodeNumber}</p>
-                  )}
-                  <Button 
-                    color="danger" 
-                    variant="light" 
-                    onClick={() => {
-                      setSelectedBook(null);
-                      setBarcodeNumber("");
-                      setScanningError("");
-                    }}
-                    className="mt-4"
-                  >
-                    Cambiar selección
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
+        {error && (
+          <div className="bg-danger-50 border border-danger-200 text-danger rounded-lg p-4">
+            {error}
+          </div>
+        )}
 
-        {/* Tarjeta de confirmación (solo se muestra cuando hay libro seleccionado y usuario identificado) */}
-        {selectedBook && userIdentified && (
-          <Card shadow="md" radius="lg" className="w-full">
-            <CardHeader>
-              <h2 className="text-xl font-semibold">Confirmar préstamo</h2>
-            </CardHeader>
-            <CardBody>
-              <div className="flex flex-col md:flex-row gap-6">
-                <Image
-                  src={selectedBook.imagen || "/placeholder-book.jpg"}
-                  alt={selectedBook.titulo}
-                  width={180}
-                  height={270}
-                  className="object-cover rounded-md"
-                />
-                <div className="space-y-4 flex-1">
-                  <h3 className="text-2xl font-bold">{selectedBook.titulo}</h3>
-                  <p className="text-xl text-default-500">{selectedBook.autor}</p>
-                  <p className="text-default-500">
-                    <span className="font-medium">Ubicación:</span> {
-                      selectedBook.ubicacion
-                    }
-                  </p>
-                  <Divider />
+        {/* Tarjeta de selección de libro */}
+        <Card className="w-full" shadow="sm">
+          <CardHeader className="px-6 py-4">
+            <h2 className="text-2xl font-semibold">Selección de Libro</h2>
+          </CardHeader>
+          <CardBody className="px-6 py-4">
+            {selectedBook ? (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-lg font-medium mb-2">Duración del préstamo</h4>
-                    <RadioGroup 
-                      value={duracionDias} 
-                      onValueChange={setDuracionDias}
+                    <h3 className="text-lg font-semibold mb-2">Información del Libro</h3>
+                    <div className="space-y-2">
+                      <p><span className="font-medium">Título:</span> {selectedBook.titulo}</p>
+                      <p><span className="font-medium">Autor:</span> {selectedBook.autor}</p>
+                      <p><span className="font-medium">ID del Libro:</span> {selectedBook.id}</p>
+                      <p><span className="font-medium">ISBN:</span> {selectedBook.isbn}</p>
+                      <p><span className="font-medium">Disponibles:</span> {selectedBook.disponibles}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Estado</h3>
+                    <Chip
+                      color="success"
+                      variant="flat"
+                      size="lg"
+                      radius="full"
                     >
-                      <Radio value="7">7 días</Radio>
-                      <Radio value="14">14 días (Estándar)</Radio>
-                      <Radio value="30">30 días (Especial)</Radio>
-                    </RadioGroup>
+                      Disponible para préstamo
+                    </Chip>
+                  </div>
+                </div>
+                <Button 
+                  color="danger" 
+                  variant="light" 
+                  onClick={() => setSelectedBook(null)}
+                >
+                  Cambiar libro
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center py-8">
+                <p className="text-lg text-default-500 mb-4">No hay libro seleccionado</p>
+                <Button 
+                  color="primary" 
+                  onClick={() => setIsBookModalOpen(true)}
+                >
+                  Seleccionar Libro
+                </Button>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Tarjeta de selección de usuario */}
+        <Card className="w-full" shadow="sm">
+          <CardHeader className="px-6 py-4">
+            <h2 className="text-2xl font-semibold">Selección de Usuario</h2>
+          </CardHeader>
+          <CardBody className="px-6 py-4">
+            {selectedUserId ? (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Usuario Seleccionado</h3>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">ID:</span> {selectedUserId}</p>
+                    <p><span className="font-medium">Nombre:</span> {selectedUserName}</p>
+                  </div>
+                </div>
+                <Button 
+                  color="danger" 
+                  variant="light" 
+                  onClick={() => {
+                    setSelectedUserId("");
+                    setSelectedUserName("");
+                  }}
+                >
+                  Cambiar usuario
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center py-8">
+                <p className="text-lg text-default-500 mb-4">No hay usuario seleccionado</p>
+                <Button 
+                  color="secondary" 
+                  onClick={() => setIsUsersModalOpen(true)}
+                >
+                  Usuarios Interesados
+                </Button>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Tarjeta de confirmación */}
+        {selectedBook && selectedUserId && (
+          <Card className="w-full" shadow="sm">
+            <CardHeader className="px-6 py-4">
+              <h2 className="text-2xl font-semibold">Confirmar Préstamo</h2>
+            </CardHeader>
+            <CardBody className="px-6 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Resumen del Préstamo</h3>
+                  <div className="space-y-2">
+                    <p><span className="font-medium">Libro:</span> {selectedBook.titulo}</p>
+                    <p><span className="font-medium">Usuario:</span> {selectedUserName}</p>
+                    <p><span className="font-medium">Duración:</span> 14 días</p>
+                    <p><span className="font-medium">Fecha de devolución prevista:</span> {
+                      new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()
+                    }</p>
                   </div>
                 </div>
               </div>
@@ -308,7 +218,11 @@ export default function NewLoanPage() {
               <Button 
                 color="danger" 
                 variant="light" 
-                onClick={() => setSelectedBook(null)}
+                onClick={() => {
+                  setSelectedBook(null);
+                  setSelectedUserId("");
+                  setSelectedUserName("");
+                }}
                 isDisabled={isConfirming}
               >
                 Cancelar
@@ -317,12 +231,26 @@ export default function NewLoanPage() {
                 color="primary" 
                 onClick={handleConfirmPrestamo}
                 isLoading={isConfirming}
+                isDisabled={isConfirming}
               >
                 Confirmar Préstamo
               </Button>
             </CardFooter>
           </Card>
         )}
+
+        {/* Modales */}
+        <BookSelectionModal
+          isOpen={isBookModalOpen}
+          onClose={() => setIsBookModalOpen(false)}
+          setBookId={handleBookSelection}
+        />
+
+        <InterestedUsersModal
+          isOpen={isUsersModalOpen}
+          onClose={() => setIsUsersModalOpen(false)}
+          setSelectedUserId={handleUserSelection}
+        />
       </div>
     </DefaultLayout>
   );

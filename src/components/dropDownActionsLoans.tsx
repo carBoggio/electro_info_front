@@ -21,7 +21,7 @@ const DropdownActionsLoans = (prestamo: Prestamo) => {
         navigate(`/prestamos/${prestamo.id}`);
         break;
       case "devolver":
-        navigate(`/prestamos/${prestamo.id}/devolver`);
+        navigate(`/libros/${prestamo.libroId}/devolver`);
         break;
       case "renovar":
         navigate(`/prestamos/${prestamo.id}/renovar`);

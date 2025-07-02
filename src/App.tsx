@@ -11,6 +11,8 @@ import UserHistoryPage from "@/pages/userHistory";
 import LoanPage from "@/pages/loan";
 import ReturnLoanPage from "@/pages/returnLoan";
 import BooksPage from "@/pages/books";
+import ReturnLoan from "@/pages/returnLoan";
+
 
 function App() {
   return (
@@ -21,9 +23,11 @@ function App() {
       <Route element={<NewLoanPage />} path="/nuevo-prestamo" />
       <Route element={<OverdueLoansPage />} path="/prestamos-vencidos" />
       <Route element={<BooksPage />} path="/libros" />
+
       <Route element={<UserProfilePage />} path="/usuarios/:userId" />
       <Route element={<RenewLoanPage />} path="/prestamos/:loanId/renovar" />
-      <Route element={<ReturnLoanPage />} path="/prestamos/:loanId/devolver" />
+      <Route element={<ReturnLoanPage />} path="/libros/:bookId/devolver" />
+      <Route element={<ReturnLoan />} path="/libros/devolver" />
       <Route element={<UserHistoryPage />} path="/usuarios/:userId/historial" />
       <Route element={<LoanPage />} path="/prestamos/:loanId" />
     </Routes>

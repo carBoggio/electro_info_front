@@ -74,9 +74,9 @@ export const Navbar = () => {
   };
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky" className="py-2">
+    <HeroUINavbar maxWidth="xl" position="sticky" className="py-3">
       {/* Contenedor principal - separa los dos grupos lo máximo posible */}
-      <div className="container mx-auto flex items-center justify-between w-full">
+      <div className="container mx-auto flex items-center justify-between w-full px-6">
         {/* GRUPO ROJO: Logo y enlaces principales */}
         <div className="flex items-center gap-8">
           {/* Logo y título */}
@@ -105,13 +105,13 @@ export const Navbar = () => {
 
           {/* Enlaces de navegación principales - escritorio */}
           <div className="hidden lg:flex items-center">
-            <nav className="flex items-center gap-8">
+            <nav className="flex items-center gap-6">
               {siteConfig.navItems.map((item) => (
                 <Link
                   key={item.href}
                   className={clsx(
                     linkStyles({ color: "foreground" }),
-                    "data-[active=true]:text-primary data-[active=true]:font-medium text-base"
+                    "data-[active=true]:text-primary data-[active=true]:font-medium text-base px-2"
                   )}
                   href={item.href}
                 >
@@ -126,13 +126,23 @@ export const Navbar = () => {
         <div className="flex items-center gap-4">
           <Button
             as={Link}
-            className="hidden lg:flex text-base font-normal"
+            className="hidden lg:flex text-base font-normal px-6"
             href="/nuevo-prestamo"
             color="primary"
             variant="flat"
             size="lg"
           >
             Nuevo Préstamo
+          </Button>
+          <Button
+            as={Link}
+            className="hidden lg:flex text-base font-normal px-6"
+            href={`/libros/devolver`}
+            color="secondary"
+            variant="flat"
+            size="lg"
+          >
+            Devolver Libro
           </Button>
           
           {/* Switch de tema personalizado que usa nuestro estado */}
@@ -149,7 +159,7 @@ export const Navbar = () => {
 
       {/* Menú móvil */}
       <NavbarMenu>
-        <div className="mx-4 mt-6 flex flex-col gap-6">
+        <div className="mx-4 mt-4 flex flex-col gap-4">
           {siteConfig.navItems.map((item) => (
             <NavbarMenuItem key={item.href}>
               <Link
@@ -170,6 +180,16 @@ export const Navbar = () => {
               className="text-lg"
             >
               Nuevo Préstamo
+            </Link>
+          </NavbarMenuItem>
+          <NavbarMenuItem>
+            <Link
+              color="secondary"
+              href="/prestamos-activos"
+              size="lg"
+              className="text-lg"
+            >
+              Devolver Libro
             </Link>
           </NavbarMenuItem>
         </div>

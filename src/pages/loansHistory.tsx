@@ -9,7 +9,7 @@ import { Select, SelectItem } from "@heroui/select";
 import DropdownActionsLoans from "@/components/dropDownActionsLoans";
 import DefaultLayout from "@/layouts/default";
 import { Prestamo, PrestamoEstado } from "@/types";
-import { getAllLoans } from "@/actions/getAllLoans";
+import { getCompleteLoanHistory } from "@/actions/getAllLoans";
 
 // Opciones para el filtro de estado
 const estadoOptions = [
@@ -31,7 +31,7 @@ export default function LoansHistoryPage() {
     const fetchPrestamos = async () => {
       try {
         setIsLoading(true);
-        const data = await getAllLoans();
+        const data = await getCompleteLoanHistory();
         setPrestamos(data);
       } catch (error) {
         console.error("Error al cargar préstamos:", error);
@@ -52,7 +52,9 @@ export default function LoansHistoryPage() {
         
         const searchMatch = 
           searchTerm === "" || 
-          (prestamo.usuarioNombre && prestamo.usuarioNombre.toLowerCase().includes(searchTerm.toLowerCase()));
+          (prestamo.usuarioNombre && prestamo.usuarioNombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (prestamo.LibroNombre && prestamo.LibroNombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (prestamo.autor && prestamo.autor.toLowerCase().includes(searchTerm.toLowerCase()));
         
         return estadoMatch && searchMatch;
       });
@@ -88,7 +90,7 @@ export default function LoansHistoryPage() {
             
             
               <Input
-                placeholder="Buscar por nombre de usuario"
+                placeholder="Buscar por nombre de usuario, libro o autor"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full sm:w-2/3"
@@ -122,9 +124,12 @@ export default function LoansHistoryPage() {
               <Table aria-label="Tabla de historial de préstamos">
                 <TableHeader>
                   <TableColumn>ID PRÉSTAMO</TableColumn>
+                  <TableColumn>LIBRO</TableColumn>
+                  <TableColumn>AUTOR</TableColumn>
                   <TableColumn>USUARIO</TableColumn>
                   <TableColumn>FECHA PRÉSTAMO</TableColumn>
                   <TableColumn>DEVOLUCIÓN PREVISTA</TableColumn>
+                  <TableColumn>DEVOLUCIÓN REAL</TableColumn>
                   <TableColumn>ESTADO</TableColumn>
                   <TableColumn>ACCIONES</TableColumn>
                 </TableHeader>
@@ -132,9 +137,23 @@ export default function LoansHistoryPage() {
                   {filteredPrestamos.map((prestamo) => (
                     <TableRow key={prestamo.id}>
                       <TableCell>{prestamo.id}</TableCell>
+                      <TableCell className="font-medium">{prestamo.LibroNombre}</TableCell>
+                      <TableCell>{prestamo.autor}</TableCell>
                       <TableCell>{prestamo.usuarioNombre || prestamo.usuarioId}</TableCell>
                       <TableCell>{prestamo.fechaPrestamo}</TableCell>
                       <TableCell>{prestamo.fechaDevolucionPrevista}</TableCell>
+                      <TableCell>
+                        {prestamo.fechaDevolucionReal ? (
+                          <span className={prestamo.diasRetraso && prestamo.diasRetraso > 0 ? "text-danger" : "text-success"}>
+                            {prestamo.fechaDevolucionReal}
+                            {prestamo.diasRetraso && prestamo.diasRetraso > 0 && (
+                              <span className="text-xs ml-1">(+{prestamo.diasRetraso} días)</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-default-400">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Chip 
                           color={getChipColor(prestamo.estado)}

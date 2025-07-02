@@ -121,7 +121,7 @@ export default function LoanPage() {
                     <>
                       <Button
                         as={Link}
-                        href={`/prestamos/${prestamo.id}/devolver`}
+                        href={`/libros/${prestamo.libroId}/devolver`}
                         color="success"
                         variant="flat"
                       >
